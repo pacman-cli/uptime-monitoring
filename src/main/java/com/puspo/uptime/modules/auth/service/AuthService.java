@@ -36,12 +36,14 @@ public class AuthService {
     userRepository.save(user);
 
     var jwtToken = jwtUtil.generateToken(user);
+
     return AuthResponse.builder()
         .token(jwtToken)
         .build();
   }
 
   public AuthResponse login(LoginRequest request) {
+
     authenticationManager.authenticate(
         new UsernamePasswordAuthenticationToken(
             request.getEmail(),
@@ -51,6 +53,7 @@ public class AuthService {
         .orElseThrow(() -> new RuntimeException("User not found"));
 
     var jwtToken = jwtUtil.generateToken(user);
+
     return AuthResponse.builder()
         .token(jwtToken)
         .build();
