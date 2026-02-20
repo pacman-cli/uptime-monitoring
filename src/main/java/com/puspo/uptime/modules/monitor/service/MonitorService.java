@@ -53,6 +53,20 @@ public class MonitorService {
     monitorRepository.delete(monitor);
   }
 
+  public void updateMonitor(Long id, MonitorRequest request, User user) {
+    Monitor monitor = monitorRepository.findByIdAndUserId(id, user.getId())
+        .orElseThrow(() -> new RuntimeException("Monitor Not found or unauthorized"));
+
+    validateMonitorRules(request);
+
+    monitor.setUrl(request.getUrl());
+    monitor.setMethod(request.getMethod());
+    monitor.setIntervalSeconds(request.getIntervalSeconds());
+    monitor.setTimeoutSeconds(request.getTimeoutSeconds());
+    monitor.setActive(request.getActive());
+    monitorRepository.save(monitor);
+  }
+
   private void validateMonitorRules(MonitorRequest request) {
     if (request.getTimeoutSeconds() > request.getIntervalSeconds()) {
       throw new IllegalArgumentException("Timeout cannot be greater than interval");
