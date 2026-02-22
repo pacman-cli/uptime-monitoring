@@ -18,44 +18,49 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class AuthService {
 
-  private final UserRepository userRepository;
-  private final PasswordEncoder passwordEncoder;
-  private final JwtUtil jwtUtil;
-  private final AuthenticationManager authenticationManager;
+    private final UserRepository userRepository;
+    private final PasswordEncoder passwordEncoder;
+    private final JwtUtil jwtUtil;
+    private final AuthenticationManager authenticationManager;
 
-  public AuthResponse register(RegisterRequest request) {
-    if (userRepository.findByEmail(request.getEmail()).isPresent()) {
-      throw new RuntimeException("Email already exists");
+    public AuthResponse register(RegisterRequest request) {
+        // Check if email already exists
+        if (userRepository.findByEmail(request.getEmail()).isPresent()) {
+            throw new RuntimeException("Email already exists");
+        }
+
+        // Create user
+        var user = User.builder()
+                .email(request.getEmail())
+                .password(passwordEncoder.encode(request.getPassword()))
+                .build();
+
+        // Save in database
+        var savedUser = userRepository.save(user);
+
+        // Generate token
+        var jwtToken = jwtUtil.generateToken(savedUser);
+
+        // Return token
+        return AuthResponse.builder()
+                .token(jwtToken)
+                .build();
     }
 
-    var user = User.builder()
-        .email(request.getEmail())
-        .password(passwordEncoder.encode(request.getPassword()))
-        .build();
+    public AuthResponse login(LoginRequest request) {
 
-    userRepository.save(user);
+        authenticationManager.authenticate(
+                new UsernamePasswordAuthenticationToken(
+                        request.getEmail(),
+                        request.getPassword()));
 
-    var jwtToken = jwtUtil.generateToken(user);
+        var user = userRepository.findByEmail(request.getEmail())
+                .orElseThrow(() -> new RuntimeException("User not found"));
 
-    return AuthResponse.builder()
-        .token(jwtToken)
-        .build();
-  }
+        var jwtToken = jwtUtil.generateToken(user);
 
-  public AuthResponse login(LoginRequest request) {
-
-    authenticationManager.authenticate(
-        new UsernamePasswordAuthenticationToken(
-            request.getEmail(),
-            request.getPassword()));
-
-    var user = userRepository.findByEmail(request.getEmail())
-        .orElseThrow(() -> new RuntimeException("User not found"));
-
-    var jwtToken = jwtUtil.generateToken(user);
-
-    return AuthResponse.builder()
-        .token(jwtToken)
-        .build();
-  }
+        return AuthResponse.builder()
+                .token(jwtToken)
+                .build();
+    }
 }

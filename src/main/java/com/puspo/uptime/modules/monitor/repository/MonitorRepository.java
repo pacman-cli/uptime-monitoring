@@ -13,4 +13,6 @@ public interface MonitorRepository extends JpaRepository<Monitor, Long> {
   List<Monitor> findAllByUserId(Long userId);
 
   Optional<Monitor> findByIdAndUserId(Long id, Long userId);
+
+  List<Monitor> findByActiveTrue();
 }
