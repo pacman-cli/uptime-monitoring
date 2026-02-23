@@ -26,3 +26,8 @@ public class MonitorScheduler {
     }
   }
 }
+
+// Chain of Responsibility Pattern
+// MonitorScheduler -> CheckService inside processAllActiveMonitors method ->
+// HttpCheckWorker inside check method (check method will execute the actual
+// check)

@@ -10,6 +10,7 @@ import lombok.extern.slf4j.Slf4j;
 @Component
 public class HttpCheckWorker {
 
+  // Check the monitor
   public void check(Monitor monitor) {
     // Day 4 MVP - Just log the check execution
     log.info("Executing HTTP check for Monitor ID {} -> [{}] {}",
