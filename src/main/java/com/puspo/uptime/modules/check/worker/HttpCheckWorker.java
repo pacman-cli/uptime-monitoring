@@ -2,6 +2,7 @@ package com.puspo.uptime.modules.check.worker;
 
 import java.time.Duration;
 
+import com.puspo.uptime.modules.alert.service.AlertService;
 import org.springframework.http.HttpMethod;
 import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.client.WebClient;
@@ -18,10 +19,12 @@ import reactor.core.publisher.Mono;
 public class HttpCheckWorker {
     private final WebClient webClient;
     private final MonitorLogRepository monitorLogRepository;
+    private final AlertService alertService;
 
-    HttpCheckWorker(MonitorLogRepository monitorLogRepository, WebClient webClient) {
+    HttpCheckWorker(MonitorLogRepository monitorLogRepository, WebClient webClient, AlertService alertService) {
         this.monitorLogRepository = monitorLogRepository;
         this.webClient = webClient;
+        this.alertService = alertService;
     }
 
     // Check the monitor
@@ -65,5 +68,8 @@ public class HttpCheckWorker {
                 .build();
         monitorLogRepository.save(monitorLog);
         log.info("Saved Log: Monitor {} is {} ({}ms)", monitor.getId(), status, latency);
+
+        // Evaluate if an alert should be triggered based on this new log!
+        alertService.evaluateMonitorRules(monitor);
     }
 }
