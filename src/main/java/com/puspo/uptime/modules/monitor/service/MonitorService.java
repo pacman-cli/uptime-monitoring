@@ -4,6 +4,8 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import com.puspo.uptime.modules.check.entity.MonitorLog;
+import com.puspo.uptime.modules.check.repository.MonitorLogRepository;
 import com.puspo.uptime.modules.monitor.dto.MetricsResponse;
 import org.springframework.cglib.core.Local;
 import org.springframework.stereotype.Service;
@@ -21,6 +23,7 @@ import lombok.RequiredArgsConstructor;
 public class MonitorService {
 
     private final MonitorRepository monitorRepository;
+    private final MonitorLogRepository monitorLogRepository;
 
     public MonitorResponse createMonitor(MonitorRequest request, User user) {
         validateMonitorRules(request);
@@ -86,10 +89,37 @@ public class MonitorService {
         LocalDateTime endTime = LocalDateTime.now();
 
         // 1. Calculate Uptime : find out logs ,total checks ,(filter)successfull checks, uptime percentage
+        List<MonitorLog> logs = monitorLogRepository.findAllByMonitorIdAndCreatedAtBetweenOrderByCreatedAtDesc(monitorId,
+                startTime,
+                endTime);
 
+        long totalChecks = logs.size();
+        long successfulChecks = logs.stream()
+                .filter(log -> "UP".equalsIgnoreCase(log.getStatus())).count();
+        double uptimePercentage = totalChecks == 0 ? 0.0 : ((double) successfulChecks / totalChecks) * 100.0;
 
         // 2. Calculate Latency Metrics (using our optimized native query)
+        List<Long> latencies = monitorLogRepository.findLatenciesByMonitorIdSince(monitorId, startTime);
 
+        long p50 = calculatePercentile(latencies, 50);
+        long p95 = calculatePercentile(latencies, 95);
+        long p99 = calculatePercentile(latencies, 99);
+        long avg = latencies.isEmpty() ? 0 : (long) latencies.stream()
+                .mapToLong(Long::longValue)
+                .average()
+                .orElse(0.0);
+
+        return MetricsResponse.builder()
+                .monitorId(monitor.getId())
+                .url(monitor.getUrl())
+                .totalChecks(totalChecks)
+                .successfulChecks(successfulChecks)
+                .uptimePercentage((double) Math.round(uptimePercentage * 100) / 100)
+                .p50LatencyMs(p50)
+                .p95LatencyMs(p95)
+                .p99LatencyMs(p99)
+                .averageLatencyMs(avg)
+                .build();
     }
 
 
