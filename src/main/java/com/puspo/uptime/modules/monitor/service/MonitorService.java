@@ -4,13 +4,12 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import com.puspo.uptime.modules.check.entity.MonitorLog;
-import com.puspo.uptime.modules.check.repository.MonitorLogRepository;
-import com.puspo.uptime.modules.monitor.dto.MetricsResponse;
-import org.springframework.cglib.core.Local;
 import org.springframework.stereotype.Service;
 
 import com.puspo.uptime.modules.auth.entity.User;
+import com.puspo.uptime.modules.check.entity.MonitorLog;
+import com.puspo.uptime.modules.check.repository.MonitorLogRepository;
+import com.puspo.uptime.modules.monitor.dto.MetricsResponse;
 import com.puspo.uptime.modules.monitor.dto.MonitorRequest;
 import com.puspo.uptime.modules.monitor.dto.MonitorResponse;
 import com.puspo.uptime.modules.monitor.entity.Monitor;
@@ -88,8 +87,10 @@ public class MonitorService {
         LocalDateTime startTime = LocalDateTime.now().minusHours(hoursBack);
         LocalDateTime endTime = LocalDateTime.now();
 
-        // 1. Calculate Uptime : find out logs ,total checks ,(filter)successfull checks, uptime percentage
-        List<MonitorLog> logs = monitorLogRepository.findAllByMonitorIdAndCreatedAtBetweenOrderByCreatedAtDesc(monitorId,
+        // 1. Calculate Uptime : find out logs ,total checks ,(filter)successfull
+        // checks, uptime percentage
+        List<MonitorLog> logs = monitorLogRepository.findAllByMonitorIdAndCreatedAtBetweenOrderByCreatedAtDesc(
+                monitorId,
                 startTime,
                 endTime);
 
@@ -104,10 +105,11 @@ public class MonitorService {
         long p50 = calculatePercentile(latencies, 50);
         long p95 = calculatePercentile(latencies, 95);
         long p99 = calculatePercentile(latencies, 99);
-        long avg = latencies.isEmpty() ? 0 : (long) latencies.stream()
-                .mapToLong(Long::longValue)
-                .average()
-                .orElse(0.0);
+        long avg = latencies.isEmpty() ? 0
+                : (long) latencies.stream()
+                        .mapToLong(Long::longValue)
+                        .average()
+                        .orElse(0.0);
 
         return MetricsResponse.builder()
                 .monitorId(monitor.getId())
@@ -115,15 +117,15 @@ public class MonitorService {
                 .totalChecks(totalChecks)
                 .successfulChecks(successfulChecks)
                 .uptimePercentage((double) Math.round(uptimePercentage * 100) / 100)
-                .p50LatencyMs(p50)
-                .p95LatencyMs(p95)
-                .p99LatencyMs(p99)
-                .averageLatencyMs(avg)
+                .p50LatencyMs((double) p50)
+                .p95LatencyMs((double) p95)
+                .p99LatencyMs((double) p99)
+                .averageLatencyMs((double) avg)
                 .build();
     }
 
-
-    // TODO: Mapper but we need to refactor it in a mapper folder and make the methods inside the class static
+    // TODO: Mapper but we need to refactor it in a mapper folder and make the
+    // methods inside the class static
     private MonitorResponse mapToResponse(Monitor monitor) {
         return MonitorResponse.builder()
                 .id(monitor.getId())
