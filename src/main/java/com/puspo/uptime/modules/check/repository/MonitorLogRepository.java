@@ -17,10 +17,10 @@ public interface MonitorLogRepository extends JpaRepository<MonitorLog, Long> {
     List<MonitorLog> findTop3ByMonitorIdOrderByCreatedAtDesc(Long monitorId);
 
     // Get all logs for a specific monitor within time frame
-    List<MonitorLog> findAllByMonitorIdAndCreatedAtBetweenOrderByCreatedAtDesc(
-            Long monitorId,
-            LocalDateTime start,
-            LocalDateTime end);
+//    List<MonitorLog> findAllByMonitorIdAndCreatedAtBetweenOrderByCreatedAtDesc(
+//            Long monitorId,
+//            LocalDateTime start,
+//            LocalDateTime end);
 
     // Get latencies for percentile calculation without loading heavy entities
     @Query(value = """
@@ -29,5 +29,7 @@ public interface MonitorLogRepository extends JpaRepository<MonitorLog, Long> {
             WHERE monitor_id = :monitorId AND create_at >= :startTime AND response_time IS NOT NULL ORDER BY response_time ASC
             """, nativeQuery = true)
     List<Long> findLatenciesByMonitorIdSince(@Param("monitorId") Long monitorId,
-            @Param("startTime") LocalDateTime startTime);
+                                             @Param("startTime") LocalDateTime startTime);
+
+    List<MonitorLog> findAllByMonitorIdAndCreatedAtBetweenOrderByCreatedAtDesc(Long monitorId, LocalDateTime createdAtAfter, LocalDateTime createdAtBefore);
 }
