@@ -27,42 +27,42 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class MonitorController {
 
-  private final MonitorService monitorService;
+    private final MonitorService monitorService;
 
-  @PostMapping
-  public ResponseEntity<MonitorResponse> createMonitor(
-      @Valid @RequestBody MonitorRequest request,
-      @AuthenticationPrincipal User user) {
-    return new ResponseEntity<>(monitorService.createMonitor(request, user), HttpStatus.CREATED);
-  }
+    @PostMapping
+    public ResponseEntity<MonitorResponse> createMonitor(
+            @Valid @RequestBody MonitorRequest request,
+            @AuthenticationPrincipal User user) {
+        return new ResponseEntity<>(monitorService.createMonitor(request, user), HttpStatus.CREATED);
+    }
 
-  @GetMapping
-  public ResponseEntity<List<MonitorResponse>> getAllMonitors(
-      @AuthenticationPrincipal User user) {
-    return ResponseEntity.ok(monitorService.getAllMonitors(user));
-  }
+    @GetMapping
+    public ResponseEntity<List<MonitorResponse>> getAllMonitors(
+            @AuthenticationPrincipal User user) {
+        return ResponseEntity.ok(monitorService.getAllMonitors(user));
+    }
 
-  @GetMapping("/{id}")
-  public ResponseEntity<MonitorResponse> getMonitorById(
-      @PathVariable Long id,
-      @AuthenticationPrincipal User user) {
-    return ResponseEntity.ok(monitorService.getMonitorById(id, user));
-  }
+    @GetMapping("/{id}")
+    public ResponseEntity<MonitorResponse> getMonitorById(
+            @PathVariable Long id,
+            @AuthenticationPrincipal User user) {
+        return ResponseEntity.ok(monitorService.getMonitorById(id, user));
+    }
 
-  @PutMapping("/{id}")
-  public ResponseEntity<Void> updateMonitor(
-      @PathVariable Long id,
-      @Valid @RequestBody MonitorRequest request,
-      @AuthenticationPrincipal User user) {
-    monitorService.updateMonitor(id, request, user);
-    return ResponseEntity.noContent().build();
-  }
+    @PutMapping("/{id}")
+    public ResponseEntity<Void> updateMonitor(
+            @PathVariable Long id,
+            @Valid @RequestBody MonitorRequest request,
+            @AuthenticationPrincipal User user) {
+        monitorService.updateMonitor(id, request, user);
+        return ResponseEntity.noContent().build();
+    }
 
-  @DeleteMapping("/{id}")
-  public ResponseEntity<Void> deleteMonitor(
-      @PathVariable Long id,
-      @AuthenticationPrincipal User user) {
-    monitorService.deleteMonitor(id, user);
-    return ResponseEntity.noContent().build();
-  }
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> deleteMonitor(
+            @PathVariable Long id,
+            @AuthenticationPrincipal User user) {
+        monitorService.deleteMonitor(id, user);
+        return ResponseEntity.noContent().build();
+    }
 }
