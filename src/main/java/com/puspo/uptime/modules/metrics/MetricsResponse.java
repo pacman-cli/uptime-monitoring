@@ -1,4 +1,4 @@
-package com.puspo.uptime.modules.monitor.dto;
+package com.puspo.uptime.modules.metrics;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -10,15 +10,15 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor
 public class MetricsResponse {
-  private Long monitorId;
-  private String url;
-  private Long totalChecks;
-  private Long successfulChecks;
-  private Double uptimePercentage;
+    private Long monitorId;
+    private String url;
+    private Long totalChecks;
+    private Long successfulChecks;
+    private Double uptimePercentage;
 
-  // Percentiles of response time
-  private Double p50LatencyMs;
-  private Double p95LatencyMs;
-  private Double p99LatencyMs;
-  private Double averageLatencyMs;
+    // Percentiles of response time
+    private Double p50LatencyMs;
+    private Double p95LatencyMs;
+    private Double p99LatencyMs;
+    private Double averageLatencyMs;
 }
