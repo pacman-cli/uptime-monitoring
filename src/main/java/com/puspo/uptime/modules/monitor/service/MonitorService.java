@@ -9,7 +9,7 @@ import org.springframework.stereotype.Service;
 import com.puspo.uptime.modules.auth.entity.User;
 import com.puspo.uptime.modules.check.entity.MonitorLog;
 import com.puspo.uptime.modules.check.repository.MonitorLogRepository;
-import com.puspo.uptime.modules.monitor.dto.MetricsResponse;
+import com.puspo.uptime.modules.metrics.MetricsResponse;
 import com.puspo.uptime.modules.monitor.dto.MonitorRequest;
 import com.puspo.uptime.modules.monitor.dto.MonitorResponse;
 import com.puspo.uptime.modules.monitor.entity.Monitor;
@@ -107,9 +107,9 @@ public class MonitorService {
         long p99 = calculatePercentile(latencies, 99);
         long avg = latencies.isEmpty() ? 0
                 : (long) latencies.stream()
-                        .mapToLong(Long::longValue)
-                        .average()
-                        .orElse(0.0);
+                .mapToLong(Long::longValue)
+                .average()
+                .orElse(0.0);
 
         return MetricsResponse.builder()
                 .monitorId(monitor.getId())
