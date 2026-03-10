@@ -3,9 +3,6 @@ package com.puspo.uptime.modules.monitor.controller;
 import com.puspo.uptime.modules.auth.entity.User;
 import com.puspo.uptime.modules.monitor.dto.MetricsResponse;
 import com.puspo.uptime.modules.monitor.service.MonitorService;
-import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/api/v1/metrics")
