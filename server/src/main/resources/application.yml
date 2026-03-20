@@ -34,3 +34,9 @@ spring:
 uptime:
   scheduler:
     poll-interval-ms: 30000
+  app:
+    base-url: http://localhost:8080
+  alert:
+    email:
+      enabled: true
+      from: puspo@gmail.com
