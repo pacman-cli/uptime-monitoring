@@ -68,6 +68,12 @@ public class HttpCheckWorker {
                 .build();
         monitorLogRepository.save(monitorLog);
         log.info("Saved Log: Monitor {} is {} ({}ms)", monitor.getId(), status, latency);
+        //Send email notification on status change
+        if (wasDown && isNowUp) {
+            emailNotificationService.sendUpAlert(monitor, monitor.getUser().getEmail());
+        } else if (!wasDown && "DOWN".equals(status)) {
+            emailNotificationService.sendDownAlert(monitor, monitor.getUser().getEmail());
+        }
 
         // Evaluate if an alert should be triggered based on this new log!
         alertService.evaluateMonitorRules(monitor);
