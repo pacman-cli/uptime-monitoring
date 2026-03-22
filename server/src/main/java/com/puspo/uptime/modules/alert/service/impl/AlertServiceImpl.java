@@ -31,6 +31,7 @@ public class AlertServiceImpl implements AlertService {
     private final MonitorLogRepository monitorLogRepository;
 
     @Override
+    @Transactional
     public void evaluateMonitorRules(Monitor monitor) {
         log.info("Evaluating alert rules for Monitor ID {} -> {}", monitor.getId(), monitor.getUrl());
         List<MonitorLog> monitorLogList = monitorLogRepository.findTop3ByMonitorIdOrderByCreatedAtDesc(monitor.getId());
