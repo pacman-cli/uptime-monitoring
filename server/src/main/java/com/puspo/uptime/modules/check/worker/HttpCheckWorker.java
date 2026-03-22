@@ -60,6 +60,14 @@ public class HttpCheckWorker {
 
     // Save logs
     public void saveLogs(Monitor monitor, String status, Integer statusCode, Long latency) {
+        //finding previous log
+        MonitorLog previousLog =
+                monitorLogRepository.findTopByMonitorIdOrderByCreatedAtDesc(monitor.getId())
+                        .orElse(null);
+
+        boolean wasDown = previousLog != null && "DOWN".equals(previousLog.getStatus());
+        boolean isNowUp = "UP".equals(status);
+
         MonitorLog monitorLog = MonitorLog.builder()
                 .monitor(monitor)
                 .status(status)
