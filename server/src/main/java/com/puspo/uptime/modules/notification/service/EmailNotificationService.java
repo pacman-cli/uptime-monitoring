@@ -48,6 +48,42 @@ public class EmailNotificationService {
         }
     }
 
+    @Async
+    public void sendUpAlert(Monitor monitor, String recipientEmail) {
+        if (!emailEnabled) {
+            log.debug("Email notification disabled, skipping up alert");
+            return;
+        }
+
+        try {
+            SimpleMailMessage message = new SimpleMailMessage();
+            message.setTo(recipientEmail);
+            message.setFrom(fromEmail);
+            message.setSubject(String.format("[RECOVERED] Monitor UP: %s", monitor.getUrl()));
+            message.setText(buildUpAlertBody(monitor));
+            javaMailSender.send(message);
+            log.info("Up alert email sent for monitor {} to {}", monitor.getId(), recipientEmail);
+        } catch (Exception e) {
+            log.error("Failed to send up alert email for monitor {}", monitor.getId(), e);
+        }
+    }
+
+    private String buildUpAlertBody(Monitor monitor) {
+        return String.format("""
+                        Your monitor is Back UP.
+                        
+                        Monitor: %s
+                        URL: %s
+                        Method: %s
+                        Time: %s
+                        
+                        Monitor Dashboard: %s/monitor/%d
+                        
+                        -UptimeMonitor
+                        """,
+                monitor.getUrl(), monitor.getUrl(), monitor.getMethod(), LocalDateTime.now(), baseUrl, monitor.getId());
+    }
+
     private String buildDownAlertBody(Monitor monitor) {
         return String.format("""
                         Your monitor has gone DOWN.
