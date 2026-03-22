@@ -20,6 +20,7 @@ public class HttpCheckWorker {
     private final WebClient webClient;
     private final MonitorLogRepository monitorLogRepository;
     private final AlertService alertService;
+    private final EmailNotificationService emailNotificationService;
 
     public HttpCheckWorker(MonitorLogRepository monitorLogRepository, WebClient webClient, AlertService alertService) {
         this.monitorLogRepository = monitorLogRepository;
