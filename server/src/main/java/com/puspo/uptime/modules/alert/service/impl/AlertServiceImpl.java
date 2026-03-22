@@ -6,6 +6,7 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import com.puspo.uptime.modules.alert.dto.AlertResponse;
 import com.puspo.uptime.modules.alert.dto.IncidentResponse;
