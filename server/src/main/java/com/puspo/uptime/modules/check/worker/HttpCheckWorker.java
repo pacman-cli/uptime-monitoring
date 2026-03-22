@@ -2,7 +2,6 @@ package com.puspo.uptime.modules.check.worker;
 
 import java.time.Duration;
 
-import com.puspo.uptime.modules.alert.service.AlertService;
 import org.springframework.http.HttpMethod;
 import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.client.WebClient;
