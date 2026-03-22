@@ -67,6 +67,7 @@ public class HttpCheckWorker {
                 .responseTime(latency)
                 .build();
         monitorLogRepository.save(monitorLog);
+
         log.info("Saved Log: Monitor {} is {} ({}ms)", monitor.getId(), status, latency);
         //Send email notification on status change
         if (wasDown && isNowUp) {
