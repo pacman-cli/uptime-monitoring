@@ -26,6 +26,7 @@ public class HttpCheckWorker {
         this.monitorLogRepository = monitorLogRepository;
         this.webClient = webClient;
         this.alertService = alertService;
+        this.emailNotificationService = emailNotificationService;
     }
 
     // Check the monitor
