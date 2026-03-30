@@ -12,8 +12,8 @@ import org.springframework.scheduling.annotation.EnableScheduling;
 @SpringBootApplication
 public class UptimeApplication {
 
-	public static void main(String[] args) {
-		SpringApplication.run(UptimeApplication.class, args);
-	}
+    public static void main(String[] args) {
+        SpringApplication.run(UptimeApplication.class, args);
+    }
 
 }
