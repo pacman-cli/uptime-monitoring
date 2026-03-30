@@ -59,8 +59,15 @@ public class Monitor extends BaseEntity {
     @Column(columnDefinition = "jsonb")
     private String headers;
 
+    @Column(name = "expected_status_codes", length = 100)
     private String expectedStatusCodes;
+
+    @Column(name = "expected_body_contains", length = 500)
     private String expectedBodyContains;
+
+    @Column(name = "check_ssl_expiration")
     private Boolean checkSslExpiration;
+
+    @Column(name = "ssl_expiry_days_threshold")
     private Integer sslExpiryDaysThreshold;
 }
