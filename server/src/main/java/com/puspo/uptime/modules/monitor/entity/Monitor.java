@@ -2,7 +2,6 @@ package com.puspo.uptime.modules.monitor.entity;
 
 import com.puspo.uptime.common.BaseEntity;
 import com.puspo.uptime.modules.auth.entity.User;
-
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
@@ -17,6 +16,8 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 
 @Entity
 @Table(name = "monitors")
@@ -27,26 +28,39 @@ import lombok.Setter;
 @Builder
 public class Monitor extends BaseEntity {
 
-  @Id
-  @GeneratedValue(strategy = GenerationType.IDENTITY)
-  private Long id;
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
 
-  @ManyToOne(fetch = FetchType.LAZY)
-  @JoinColumn(name = "user_id", nullable = false)
-  private User user;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id", nullable = false)
+    private User user;
 
-  @Column(nullable = false)
-  private String url;
+    @Column(nullable = false)
+    private String name;
 
-  @Column(nullable = false, length = 10)
-  private String method;
+    @Column(nullable = false)
+    private String url;
 
-  @Column(name = "interval_seconds", nullable = false)
-  private Integer intervalSeconds;
+    @Column(nullable = false, length = 10)
+    private String method;
 
-  @Column(name = "timeout_seconds", nullable = false)
-  private Integer timeoutSeconds;
+    @Column(name = "interval_seconds", nullable = false)
+    private Integer intervalSeconds;
 
-  @Column(nullable = false)
-  private Boolean active;
+    @Column(name = "timeout_seconds", nullable = false)
+    private Integer timeoutSeconds;
+
+    @Column(nullable = false)
+    private Boolean active;
+
+    //adding new fields
+    @JdbcTypeCode(SqlTypes.JSON)
+    @Column(columnDefinition = "jsonb")
+    private String headers;
+
+    private String expectedStatusCodes;
+    private String expectedBodyContains;
+    private Boolean checkSslExpiration;
+    private Integer sslExpiryDaysThreshold;
 }
