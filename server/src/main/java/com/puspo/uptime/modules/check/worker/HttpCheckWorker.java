@@ -42,24 +42,24 @@ public class HttpCheckWorker {
 
         long startTime = System.currentTimeMillis();
         // Day 5 will implement the actual WebClient request and DB logging
-        webClient.method(HttpMethod.valueOf(monitor.getMethod()))
-                .uri(monitor.getUrl())
-                .exchangeToMono(response -> {
-                    long latency = System.currentTimeMillis() - startTime;
-                    int statusCode = response.statusCode().value();
-                    boolean isSuccess = response.statusCode().is2xxSuccessful();
-
-                    saveLogs(monitor, isSuccess ? "UP" : "DOWN", statusCode, latency);
-                    return Mono.empty(); // Empty Mono to indicate successful completion
-                })
-                .timeout(Duration.ofSeconds(monitor.getTimeoutSeconds()))
-                .onErrorResume(error -> {
-                    long latency = System.currentTimeMillis() - startTime;
-                    log.error("Monitor {} failed: {}", monitor.getId(), error.getMessage());
-                    saveLogs(monitor, "DOWN", null, latency);
-                    return Mono.empty(); // Empty Mono to indicate successful completion
-                })
-                .subscribe(); // Asynchronous execution
+//        webClient.method(HttpMethod.valueOf(monitor.getMethod()))
+//                .uri(monitor.getUrl())
+//                .exchangeToMono(response -> {
+//                    long latency = System.currentTimeMillis() - startTime;
+//                    int statusCode = response.statusCode().value();
+//                    boolean isSuccess = response.statusCode().is2xxSuccessful();
+//
+//                    saveLogs(monitor, isSuccess ? "UP" : "DOWN", statusCode, latency);
+//                    return Mono.empty(); // Empty Mono to indicate successful completion
+//                })
+//                .timeout(Duration.ofSeconds(monitor.getTimeoutSeconds()))
+//                .onErrorResume(error -> {
+//                    long latency = System.currentTimeMillis() - startTime;
+//                    log.error("Monitor {} failed: {}", monitor.getId(), error.getMessage());
+//                    saveLogs(monitor, "DOWN", null, latency);
+//                    return Mono.empty(); // Empty Mono to indicate successful completion
+//                })
+//                .subscribe(); // Asynchronous execution
 
     }
 
