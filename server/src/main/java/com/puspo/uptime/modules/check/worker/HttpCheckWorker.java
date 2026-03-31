@@ -24,7 +24,7 @@ public class HttpCheckWorker {
     private final EmailNotificationService emailNotificationService;
     private final ObjectMapper objectMapper;
 
-    public HttpCheckWorker(MonitorLogRepository monitorLogRepository, WebClient webClient, AlertService alertService, EmailNotificationService emailNotificationService) {
+    public HttpCheckWorker(MonitorLogRepository monitorLogRepository, WebClient webClient, AlertService alertService, EmailNotificationService emailNotificationService, ObjectMapper objectMapper) {
         this.monitorLogRepository = monitorLogRepository;
         this.webClient = webClient;
         this.alertService = alertService;
