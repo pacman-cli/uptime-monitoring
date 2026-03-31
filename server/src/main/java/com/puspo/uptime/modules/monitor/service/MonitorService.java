@@ -154,6 +154,10 @@ public class MonitorService {
                 .intervalSeconds(monitor.getIntervalSeconds())
                 .timeoutSeconds(monitor.getTimeoutSeconds())
                 .active(monitor.getActive())
+                .expectedBodyContains(monitor.getExpectedBodyContains())
+                .expectedStatusCodes(monitor.getExpectedStatusCodes())
+                .checkSslExpiration(monitor.getCheckSslExpiration())
+                .sslExpiryDaysThreshold(monitor.getSslExpiryDaysThreshold())
                 .createdAt(monitor.getCreatedAt())
                 .updatedAt(monitor.getUpdatedAt())
                 .build();
