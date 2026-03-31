@@ -28,46 +28,46 @@ import org.hibernate.type.SqlTypes;
 @Builder
 public class Monitor extends BaseEntity {
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+  @Id
+  @GeneratedValue(strategy = GenerationType.IDENTITY)
+  private Long id;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "user_id", nullable = false)
-    private User user;
+  @ManyToOne(fetch = FetchType.LAZY)
+  @JoinColumn(name = "user_id", nullable = false)
+  private User user;
 
-    @Column(nullable = false)
-    private String name;
+  @Column(nullable = false)
+  private String name;
 
-    @Column(nullable = false)
-    private String url;
+  @Column(nullable = false)
+  private String url;
 
-    @Column(nullable = false, length = 10)
-    private String method;
+  @Column(nullable = false, length = 10)
+  private String method;
 
-    @Column(name = "interval_seconds", nullable = false)
-    private Integer intervalSeconds;
+  @Column(name = "interval_seconds", nullable = false)
+  private Integer intervalSeconds;
 
-    @Column(name = "timeout_seconds", nullable = false)
-    private Integer timeoutSeconds;
+  @Column(name = "timeout_seconds", nullable = false)
+  private Integer timeoutSeconds;
 
-    @Column(nullable = false)
-    private Boolean active;
+  @Column(nullable = false)
+  private Boolean active;
 
-    //adding new fields
-    @JdbcTypeCode(SqlTypes.JSON)
-    @Column(columnDefinition = "jsonb")
-    private String headers;
+  // adding new fields
+  @JdbcTypeCode(SqlTypes.JSON)
+  @Column(columnDefinition = "jsonb")
+  private String headers;
 
-    @Column(name = "expected_status_codes", length = 100)
-    private String expectedStatusCodes;
+  @Column(name = "expected_status_codes", length = 100)
+  private String expectedStatusCodes;
 
-    @Column(name = "expected_body_contains", length = 500)
-    private String expectedBodyContains;
+  @Column(name = "expected_body_contains", length = 500)
+  private String expectedBodyContains;
 
-    @Column(name = "check_ssl_expiration")
-    private Boolean checkSslExpiration;
+  @Column(name = "check_ssl_expiration")
+  private Boolean checkSslExpiration;
 
-    @Column(name = "ssl_expiry_days_threshold")
-    private Integer sslExpiryDaysThreshold;
+  @Column(name = "ssl_expiry_days_threshold")
+  private Integer sslExpiryDaysThreshold;
 }
