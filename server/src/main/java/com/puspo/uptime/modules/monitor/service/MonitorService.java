@@ -36,6 +36,10 @@ public class MonitorService {
                 .intervalSeconds(request.getIntervalSeconds())
                 .timeoutSeconds(request.getTimeoutSeconds())
                 .active(request.getActive())
+                .expectedBodyContains(request.getExpectedBodyContains())
+                .expectedStatusCodes(request.getExpectedStatusCodes())
+                .checkSslExpiration(request.getCheckSslExpiration() != null ? request.getCheckSslExpiration() : false)
+                .sslExpiryDaysThreshold(request.getSslExpiryDaysThreshold() != null ? request.getSslExpiryDaysThreshold() : 30)
                 .build();
 
         return mapToResponse(monitorRepository.save(monitor));
