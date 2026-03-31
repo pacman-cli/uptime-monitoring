@@ -29,6 +29,7 @@ public class HttpCheckWorker {
         this.webClient = webClient;
         this.alertService = alertService;
         this.emailNotificationService = emailNotificationService;
+        this.objectMapper = objectMapper;
     }
 
     // Check the monitor
