@@ -63,6 +63,23 @@ public class HttpCheckWorker {
 
     }
 
+    private void addCustomHeaders(HttpHeaders httpHeaders, String headersJson) {
+        try {
+            Map<String, String> headerMap = objectMapper.readValue(
+                    headersJson,
+                    new TypeReference<Map<String, String>>() {
+                    }
+            );
+//        headerMap.forEach(httpHeaders::add);//this can be a way
+            headerMap.forEach((key, value) -> {
+                httpHeaders.add(key, value);
+                log.info("Added custom header: {} -> {}", key, value);
+            });
+        } catch (JsonProcessingException e) {
+            log.error("Error parsing custom headers: {}", e.getMessage());
+        }
+    }
+
     // Save logs
     public void saveLogs(Monitor monitor, String status, Integer statusCode, Long latency) {
         //finding previous log
