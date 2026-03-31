@@ -70,6 +70,10 @@ public class MonitorService {
         monitor.setIntervalSeconds(request.getIntervalSeconds());
         monitor.setTimeoutSeconds(request.getTimeoutSeconds());
         monitor.setActive(request.getActive());
+        monitor.setExpectedBodyContains(request.getExpectedBodyContains());
+        monitor.setExpectedStatusCodes(request.getExpectedStatusCodes());
+        monitor.setCheckSslExpiration(request.getCheckSslExpiration() != null ? request.getCheckSslExpiration() : false);
+        monitor.setSslExpiryDaysThreshold(request.getSslExpiryDaysThreshold() != null ? request.getSslExpiryDaysThreshold() : 30);
         monitorRepository.save(monitor);
     }
 
