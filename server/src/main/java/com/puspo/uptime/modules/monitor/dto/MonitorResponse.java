@@ -12,12 +12,16 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor
 public class MonitorResponse {
-  private Long id;
-  private String url;
-  private String method;
-  private Integer intervalSeconds;
-  private Integer timeoutSeconds;
-  private Boolean active;
-  private LocalDateTime createdAt;
-  private LocalDateTime updatedAt;
+    private Long id;
+    private String url;
+    private String method;
+    private Integer intervalSeconds;
+    private Integer timeoutSeconds;
+    private Boolean active;
+    private LocalDateTime createdAt;
+    private LocalDateTime updatedAt;
+    private String expectedStatusCodes;
+    private String expectedBodyContains;
+    private Boolean checkSslExpiration;
+    private Integer sslExpiryDaysThreshold;
 }
