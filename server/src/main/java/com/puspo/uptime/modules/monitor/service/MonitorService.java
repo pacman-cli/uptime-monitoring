@@ -127,9 +127,9 @@ public class MonitorService {
         long p99 = calculatePercentile(latencies, 99);
         long avg = latencies.isEmpty() ? 0
                 : (long) latencies.stream()
-                .mapToLong(Long::longValue)
-                .average()
-                .orElse(0.0);
+                         .mapToLong(Long::longValue)
+                         .average()
+                         .orElse(0.0);
 
         return MetricsResponse.builder()
                 .monitorId(monitor.getId())
@@ -195,9 +195,9 @@ public class MonitorService {
     }
 
     //like mapper but in a different way, its a helper function to get the monitor and check if the user is the owner of the monitor
-        private Monitor getOwnedMonitor(Long monitorId, User user) {
-                return monitorRepository.findByIdAndUserId(monitorId, user.getId())
-                                .orElseThrow(() -> new ResourceNotFoundException("Monitor not found"));
-        }
+    private Monitor getOwnedMonitor(Long monitorId, User user) {
+        return monitorRepository.findByIdAndUserId(monitorId, user.getId())
+                .orElseThrow(() -> new ResourceNotFoundException("Monitor not found"));
+    }
 
 }
