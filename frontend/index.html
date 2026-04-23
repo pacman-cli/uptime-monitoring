@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Uptime Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="styles.css">
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        brand: '#10b981',
+                        surface: '#1e293b', // slate-800
+                        background: '#0f172a', // slate-900
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+
+<body class="bg-background text-slate-200 font-sans antialiased min-h-screen">
+
+    <!-- Navbar -->
+    <nav class="bg-surface/50 backdrop-blur-md border-b border-white/5 sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-16">
+                <div class="flex items-center gap-3">
+                    <div
+                        class="w-8 h-8 rounded-lg bg-gradient-to-br from-brand to-emerald-400 flex items-center justify-center shadow-lg shadow-brand/20">
+                        <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+                        </svg>
+                    </div>
+                    <span class="font-bold text-xl tracking-tight text-white">UptimeMonitor</span>
+                </div>
+                <div>
+                    <button onclick="logout()"
+                        class="text-sm font-medium text-slate-400 hover:text-white transition-colors">Sign Out</button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 fade-in-up">
+
+        <!-- Header & Action -->
+        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8 gap-4">
+            <div>
+                <h1 class="text-2xl font-bold text-white tracking-tight">Active Monitors</h1>
+                <p class="text-slate-400 text-sm mt-1">Real-time status of your endpoints</p>
+            </div>
+            <button onclick="openModal()"
+                class="bg-brand hover:bg-emerald-500 text-white px-5 py-2.5 rounded-lg font-medium text-sm transition-all shadow-lg shadow-brand/20 flex items-center gap-2 hover:scale-[1.02]">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+                </svg>
+                New Monitor
+            </button>
+        </div>
+
+        <div id="noticeBar"
+            class="mb-6 hidden items-start justify-between gap-4 rounded-xl border px-4 py-3 text-sm transition-opacity duration-200">
+            <p id="noticeText" class="font-medium"></p>
+            <button onclick="clearNotice()" class="text-slate-300 hover:text-white transition"
+                aria-label="Dismiss notice">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12">
+                    </path>
+                </svg>
+            </button>
+        </div>
+
+        <section class="mb-8 grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
+            <div class="rounded-2xl border border-white/5 bg-surface/40 p-5">
+                <p class="text-[10px] uppercase tracking-[0.24em] text-slate-500 font-semibold">Total Monitors</p>
+                <p id="overviewTotal" class="mt-3 text-3xl font-bold text-white">0</p>
+                <p class="mt-1 text-sm text-slate-400">All configured checks</p>
+            </div>
+            <div class="rounded-2xl border border-brand/15 bg-brand/10 p-5">
+                <p class="text-[10px] uppercase tracking-[0.24em] text-emerald-200/70 font-semibold">Healthy</p>
+                <p id="overviewHealthy" class="mt-3 text-3xl font-bold text-white">0</p>
+                <p class="mt-1 text-sm text-emerald-100/70">Most recent check is UP</p>
+            </div>
+            <div class="rounded-2xl border border-red-500/15 bg-red-500/10 p-5">
+                <p class="text-[10px] uppercase tracking-[0.24em] text-red-200/70 font-semibold">Failing</p>
+                <p id="overviewFailing" class="mt-3 text-3xl font-bold text-white">0</p>
+                <p class="mt-1 text-sm text-red-100/70">Needs investigation</p>
+            </div>
+            <div class="rounded-2xl border border-yellow-400/15 bg-yellow-400/10 p-5">
+                <p class="text-[10px] uppercase tracking-[0.24em] text-yellow-200/70 font-semibold">Pending</p>
+                <p id="overviewPending" class="mt-3 text-3xl font-bold text-white">0</p>
+                <p class="mt-1 text-sm text-yellow-100/70">No completed check yet</p>
+            </div>
+        </section>
+
+        <!-- Alerts Section -->
+        <div id="alertsContainer" class="mb-8 hidden flex-col gap-3">
+            <h2 class="text-lg font-semibold text-white mb-2 flex items-center gap-2">
+                <svg class="w-5 h-5 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z">
+                    </path>
+                </svg>
+                Recent Alerts
+            </h2>
+            <div id="alertsList" class="flex flex-col gap-3">
+                <!-- Alerts injected via JS -->
+            </div>
+        </div>
+
+        <div id="incidentsContainer" class="mb-8 hidden flex-col gap-3">
+            <div class="flex items-center justify-between gap-4">
+                <div>
+                    <h2 class="text-lg font-semibold text-white flex items-center gap-2">
+                        <svg class="w-5 h-5 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                        </svg>
+                        Recent Incidents
+                    </h2>
+                    <p class="mt-1 text-sm text-slate-400">Open outages and recently resolved recoveries</p>
+                </div>
+            </div>
+            <div id="incidentsList" class="grid grid-cols-1 gap-3 lg:grid-cols-2">
+                <!-- Incidents injected via JS -->
+            </div>
+        </div>
+
+        <!-- Empty State -->
+        <div id="emptyState"
+            class="hidden flex-col items-center justify-center py-20 bg-surface/30 rounded-2xl border border-white/5 border-dashed">
+            <div class="w-16 h-16 bg-brand/10 rounded-full flex items-center justify-center mb-4">
+                <svg class="w-8 h-8 text-brand" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+                        d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z"></path>
+                </svg>
+            </div>
+            <h3 class="text-lg font-medium text-white">No monitors yet</h3>
+            <p class="text-slate-400 mt-1 max-w-sm text-center">Add a monitor to start tracking downtime and latency
+                instantly.</p>
+        </div>
+
+        <!-- Grid -->
+        <div id="monitorGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <!-- Cards injected via JS -->
+        </div>
+
+    </main>
+
+    <!-- Modal overlay -->
+    <div id="modal"
+        class="fixed inset-0 bg-background/80 backdrop-blur-sm z-[100] hidden items-center justify-center opacity-0 transition-opacity duration-300">
+        <div class="bg-surface rounded-2xl w-full max-w-lg mx-4 border border-white/10 shadow-2xl transform scale-95 transition-transform duration-300"
+            id="modalContent">
+
+            <div class="px-6 py-4 border-b border-white/10 flex justify-between items-center">
+                <h3 id="monitorModalTitle" class="text-lg font-semibold text-white">Add Monitor</h3>
+                <button onclick="closeModal()" class="text-slate-400 hover:text-white transition">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12">
+                        </path>
+                    </svg>
+                </button>
+            </div>
+
+            <form id="monitorForm" class="p-6 space-y-5">
+                <div>
+                    <label class="block text-sm font-medium text-slate-300 mb-1">Target URL</label>
+                    <input type="url" id="monitorUrl" required
+                        class="w-full bg-background border border-slate-700/50 rounded-lg px-4 py-2.5 text-white focus:outline-none focus:border-brand transition"
+                        placeholder="https://api.example.com">
+                </div>
+
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-slate-300 mb-1">Method</label>
+                        <select id="monitorMethod"
+                            class="w-full bg-background border border-slate-700/50 rounded-lg px-4 py-2.5 text-white focus:outline-none focus:border-brand appearance-none">
+                            <option>GET</option>
+                            <option>POST</option>
+                            <option>PUT</option>
+                            <option>DELETE</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-slate-300 mb-1">Interval (Secs)</label>
+                        <input type="number" id="monitorInterval" min="30" value="60" required
+                            class="w-full bg-background border border-slate-700/50 rounded-lg px-4 py-2.5 text-white focus:outline-none focus:border-brand transition">
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-slate-300 mb-1">Timeout (Secs)</label>
+                    <input type="number" id="monitorTimeout" min="1" max="30" value="10" required
+                        class="w-full bg-background border border-slate-700/50 rounded-lg px-4 py-2.5 text-white focus:outline-none focus:border-brand transition">
+                </div>
+
+                <label
+                    class="flex items-center justify-between rounded-xl border border-white/10 bg-background/40 px-4 py-3">
+                    <div>
+                        <p class="text-sm font-medium text-white">Tracking Enabled</p>
+                        <p class="text-xs text-slate-400">Disable this to keep the monitor saved but paused</p>
+                    </div>
+                    <input type="checkbox" id="monitorActive" checked
+                        class="h-4 w-4 rounded border-slate-600 bg-background text-brand focus:ring-brand">
+                </label>
+
+                <div class="pt-4 flex justify-end gap-3">
+                    <button type="button" onclick="closeModal()"
+                        class="px-5 py-2.5 rounded-lg font-medium text-slate-300 hover:bg-white/5 transition">Cancel</button>
+                    <button id="monitorSubmitButton" type="submit"
+                        class="bg-brand hover:bg-emerald-500 text-white px-5 py-2.5 rounded-lg font-medium transition shadow-lg shadow-brand/20">Save
+                        Monitor</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div id="detailsModal"
+        class="fixed inset-0 bg-background/80 backdrop-blur-sm z-[110] hidden items-center justify-center opacity-0 transition-opacity duration-200 px-4 py-6">
+        <div id="detailsModalContent"
+            class="w-full max-w-6xl max-h-full overflow-hidden rounded-3xl border border-white/10 bg-surface shadow-2xl transform scale-95 transition-transform duration-200 flex flex-col">
+            <div class="flex items-start justify-between gap-4 border-b border-white/10 px-6 py-5">
+                <div class="min-w-0">
+                    <p class="text-[10px] font-semibold uppercase tracking-[0.26em] text-slate-500">Monitor Insights</p>
+                    <h2 id="detailsTitle" class="mt-2 truncate text-2xl font-semibold text-white">Loading monitor
+                        details...</h2>
+                    <p id="detailsSubtitle" class="mt-1 text-sm text-slate-400">Fetching metrics and check history</p>
+                </div>
+                <div class="flex items-center gap-3">
+                    <button onclick="refreshSelectedMonitorDetails()"
+                        class="rounded-lg border border-white/10 bg-white/5 px-4 py-2 text-sm font-medium text-slate-200 transition hover:border-brand/40 hover:bg-brand/10">Refresh
+                        Data</button>
+                    <button onclick="closeDetailsModal()" class="text-slate-400 hover:text-white transition">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M6 18L18 6M6 6l12 12"></path>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+
+            <div class="overflow-y-auto px-6 py-6 space-y-6">
+                <section id="detailsMeta"></section>
+
+                <section>
+                    <div class="mb-3 flex items-center justify-between gap-4">
+                        <div>
+                            <h3 class="text-lg font-semibold text-white">24 Hour Metrics</h3>
+                            <p class="text-sm text-slate-400">Latency percentiles and uptime derived from recent checks
+                            </p>
+                        </div>
+                    </div>
+                    <div id="detailsMetrics"></div>
+                </section>
+
+                <section>
+                    <div class="mb-3">
+                        <h3 class="text-lg font-semibold text-white">Recent Check History</h3>
+                        <p class="text-sm text-slate-400">Latest execution results returned by the backend history API
+                        </p>
+                    </div>
+                    <div id="detailsHistory"></div>
+                </section>
+
+                <section>
+                    <div class="mb-3">
+                        <h3 class="text-lg font-semibold text-white">Notes</h3>
+                        <p class="text-sm text-slate-400">Quick interpretation of the recent monitor data</p>
+                    </div>
+                    <div id="detailsNotes"></div>
+                </section>
+            </div>
+        </div>
+    </div>
+
+    <div id="deleteConfirmModal"
+        class="fixed inset-0 bg-background/80 backdrop-blur-sm z-[120] hidden items-center justify-center opacity-0 transition-opacity duration-200 px-4">
+        <div id="deleteConfirmContent"
+            class="w-full max-w-md rounded-2xl border border-white/10 bg-surface p-6 shadow-2xl transform scale-95 transition-transform duration-200">
+            <div class="flex items-start gap-3">
+                <div class="mt-0.5 rounded-lg bg-red-500/10 p-2 text-red-400">
+                    <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M12 9v2m0 4h.01m-7.938 4h15.876c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L2.34 16c-.77 1.333.192 3 1.732 3z">
+                        </path>
+                    </svg>
+                </div>
+                <div>
+                    <h3 class="text-lg font-semibold text-white">Delete Monitor</h3>
+                    <p class="mt-1 text-sm text-slate-300">This action cannot be undone.</p>
+                </div>
+            </div>
+
+            <p id="deleteMonitorSummary"
+                class="mt-4 rounded-xl border border-white/10 bg-background/40 px-4 py-3 text-sm text-slate-200"></p>
+
+            <div class="mt-6 flex justify-end gap-3">
+                <button type="button" onclick="closeDeleteConfirmModal()"
+                    class="rounded-lg px-4 py-2 text-sm font-medium text-slate-300 transition hover:bg-white/5">Cancel</button>
+                <button type="button" onclick="confirmDeleteMonitor()"
+                    class="rounded-lg bg-red-500 px-4 py-2 text-sm font-medium text-white transition hover:bg-red-400">Delete</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+    <script>
+        // Check auth on page load
+        if (!localStorage.getItem('uptime_jwt')) {
+            window.location.href = 'login.html'
+        } else {
+            loadDashboard()
+            setInterval(() => {
+                loadDashboard()
+            }, 10000)
+        }
+    </script>
+</body>
+
+</html>
