@@ -31,11 +31,12 @@ const pendingToggleMonitorIds = new Set()
 let isSavingMonitor = false
 
 async function readErrorMessage(res, fallbackMessage) {
-    const contentType = res.headers.get('Content-Type') || ''
-
     try {
+        const text = await res.text()
+        const contentType = res.headers.get('Content-Type') || ''
+
         if (contentType.includes('application/json')) {
-            const body = await res.json()
+            const body = JSON.parse(text)
             if (body.message) {
                 return body.message
             }
@@ -45,7 +46,6 @@ async function readErrorMessage(res, fallbackMessage) {
             }
         }
 
-        const text = await res.text()
         return text || fallbackMessage
     } catch {
         return fallbackMessage
@@ -960,8 +960,8 @@ if (monitorForm) {
         const payload = {
             url: document.getElementById('monitorUrl').value.trim(),
             method: document.getElementById('monitorMethod').value,
-            intervalSeconds: parseInt(document.getElementById('monitorInterval').value, 10),
-            timeoutSeconds: parseInt(document.getElementById('monitorTimeout').value, 10),
+            intervalSeconds: parseInt(document.getElementById('monitorInterval').value, 10) || 60,
+            timeoutSeconds: parseInt(document.getElementById('monitorTimeout').value, 10) || 10,
             active: activeInput ? activeInput.checked : true
         }
 

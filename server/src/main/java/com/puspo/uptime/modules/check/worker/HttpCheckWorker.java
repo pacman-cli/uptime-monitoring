@@ -39,9 +39,7 @@ public class HttpCheckWorker {
         this.objectMapper = objectMapper;
     }
 
-    // Check the monitor
     public void check(Monitor monitor) {
-        // Day 4 MVP - Just log the check execution
         log.info("Executing HTTP check for Monitor ID {} -> [{}] {}",
                 monitor.getId(),
                 monitor.getMethod(),
@@ -52,7 +50,6 @@ public class HttpCheckWorker {
                 HttpMethod.valueOf(monitor.getMethod())
         ).uri(monitor.getUrl());
 
-        //If headers not null or not blank then add them{adding custom headers if configured
         if (monitor.getHeaders() != null && !monitor.getHeaders().isBlank()) {
             requestHeadersSpec = requestHeadersSpec.headers(
                     httpHeaders -> addCustomHeaders(httpHeaders, monitor.getHeaders())
@@ -65,10 +62,7 @@ public class HttpCheckWorker {
                             if (monitor.getExpectedBodyContains() != null && !monitor.getExpectedBodyContains().isBlank()) {
                                 return response.bodyToMono(String.class)
                                         .defaultIfEmpty("")
-                                        .map(body -> {
-                                            processResponse(monitor, startTime, statusCode, body);
-                                            return null;
-                                        })
+                                        .doOnNext(body -> processResponse(monitor, startTime, statusCode, body))
                                         .then();
                             } else {
                                 processResponse(monitor, startTime, statusCode, null);
@@ -84,27 +78,6 @@ public class HttpCheckWorker {
                     return Mono.empty(); // Empty Mono to indicate successful completion
                 })
                 .subscribe();
-        ;
-        // Day 5 will implement the actual WebClient request and DB logging
-//        webClient.method(HttpMethod.valueOf(monitor.getMethod()))
-//                .uri(monitor.getUrl())
-//                .exchangeToMono(response -> {
-//                    long latency = System.currentTimeMillis() - startTime;
-//                    int statusCode = response.statusCode().value();
-//                    boolean isSuccess = response.statusCode().is2xxSuccessful();
-//
-//                    saveLogs(monitor, isSuccess ? "UP" : "DOWN", statusCode, latency);
-//                    return Mono.empty(); // Empty Mono to indicate successful completion
-//                })
-//                .timeout(Duration.ofSeconds(monitor.getTimeoutSeconds()))
-//                .onErrorResume(error -> {
-//                    long latency = System.currentTimeMillis() - startTime;
-//                    log.error("Monitor {} failed: {}", monitor.getId(), error.getMessage());
-//                    saveLogs(monitor, "DOWN", null, latency);
-//                    return Mono.empty(); // Empty Mono to indicate successful completion
-//                })
-//                .subscribe(); // Asynchronous execution
-
     }
 
     private void processResponse(Monitor monitor, long startTime, int statusCode, String body) {
@@ -126,20 +99,22 @@ public class HttpCheckWorker {
         saveLogs(monitor, status, statusCode, latency);
     }
 
-
-
     private boolean isStatusCodeValid(int actualStatusCode, String expectedStatusCodes) {
-        // If no expected codes specified, accept any 2xx status
+        List<Integer> expectedCodes;
+
         if (expectedStatusCodes == null || expectedStatusCodes.isBlank()) {
-            return actualStatusCode >= 200 && actualStatusCode < 300;
+            expectedCodes = List.of();
+        } else {
+            expectedCodes = Arrays.stream(expectedStatusCodes.split(","))
+                    .map(String::trim)
+                    .filter(s -> !s.isEmpty() && s.chars().allMatch(Character::isDigit))
+                    .map(Integer::parseInt)
+                    .toList();
         }
-        // Parse and validate against expected status codes
-        List<Integer> expectedCodes = Arrays.stream(expectedStatusCodes.split(","))
-                .map(String::trim)
-                .filter(s -> !s.isEmpty())
-                .map(Integer::parseInt)
-                .toList();
-        return expectedCodes.contains(actualStatusCode);
+
+        return expectedCodes.isEmpty()
+                ? actualStatusCode >= 200 && actualStatusCode < 300
+                : expectedCodes.contains(actualStatusCode);
     }
 
     private void addCustomHeaders(HttpHeaders httpHeaders, String headersJson) {
@@ -149,7 +124,6 @@ public class HttpCheckWorker {
                     new TypeReference<Map<String, String>>() {
                     }
             );
-//        headerMap.forEach(httpHeaders::add);//this can be a way
             headerMap.forEach((key, value) -> {
                 httpHeaders.add(key, value);
                 log.info("Added custom header: {} -> {}", key, value);
@@ -159,9 +133,7 @@ public class HttpCheckWorker {
         }
     }
 
-    // Save logs
     public void saveLogs(Monitor monitor, String status, Integer statusCode, Long latency) {
-        //finding previous log
         MonitorLog previousLog =
                 monitorLogRepository.findTopByMonitorIdOrderByCreatedAtDesc(monitor.getId())
                         .orElse(null);
