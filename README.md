@@ -16,6 +16,93 @@ A full-stack uptime monitoring application that tracks website/service availabil
 | API Docs | SpringDoc OpenAPI / Swagger |
 | Build | Maven |
 
+---
+
+## Features
+
+### Core Monitoring
+- **HTTP Health Checks** — Periodically sends HTTP requests (GET, POST, PUT, DELETE, HEAD, PATCH) to configured URLs and records status
+- **Configurable Intervals** — Each monitor has its own check interval (in seconds), independent of others
+- **Timeout Handling** — Per-monitor timeout configuration; marks target as DOWN on timeout
+- **Custom Headers** — Supports JSON-based custom HTTP headers for authenticated endpoints
+- **Status Code Validation** — Validates response against expected status codes (comma-separated list, defaults to 2xx)
+- **Body Content Validation** — Optionally checks if response body contains expected string
+- **SSL Certificate Monitoring** — Configurable SSL expiry threshold alerts (planned)
+
+### Alerting & Incidents
+- **3-Strike Rule** — Incident opens only after 3 consecutive DOWN checks (avoids false positives from transient failures)
+- **Auto-Recovery Detection** — Automatically resolves incidents when monitor returns UP
+- **Email Notifications** — Sends DOWN/UP alerts via SMTP on status transitions
+- **Alert History** — Persists all alert messages with timestamps for audit trail
+- **Incident Tracking** — Records outage duration (opened_at → resolved_at) per monitor
+
+### Dashboard & Metrics
+- **Real-time Overview** — Total/healthy/failing/pending monitor counts at a glance
+- **Latency Percentiles** — P50, P95, P99 response time metrics over configurable time window
+- **Uptime Percentage** — Calculated from check history (UP checks / total checks × 100)
+- **Check History** — View last N checks with status, HTTP code, and response time
+- **Monitor Details** — Deep-dive view with metrics, history timeline, and operational notes
+
+### User Management
+- **JWT Authentication** — Stateless auth with 24-hour token expiry
+- **BCrypt Password Hashing** — Industry-standard password security
+- **Multi-tenant Isolation** — Each user sees only their own monitors, alerts, and incidents
+- **Auto-logout** — Frontend automatically redirects to login on 401/403 responses
+
+### Developer Experience
+- **Swagger UI** — Interactive API documentation at `/swagger-ui.html`
+- **Flyway Migrations** — Version-controlled database schema changes
+- **Modular Architecture** — Each domain (auth, monitor, check, alert, notification, metrics) is self-contained
+- **Docker PostgreSQL** — One-command database setup via docker-compose
+
+---
+
+## Functional Requirements
+
+| ID | Requirement | Status |
+|----|-------------|--------|
+| FR-01 | User can register with email and password | ✅ Done |
+| FR-02 | User can login and receive JWT token | ✅ Done |
+| FR-03 | User can create HTTP monitors with URL, method, interval, timeout | ✅ Done |
+| FR-04 | User can update and delete their own monitors | ✅ Done |
+| FR-05 | User can pause/resume monitors without deleting them | ✅ Done |
+| FR-06 | System checks active monitors at configured intervals | ✅ Done |
+| FR-07 | System validates response status code against expected codes | ✅ Done |
+| FR-08 | System validates response body contains expected string | ✅ Done |
+| FR-09 | System supports custom HTTP headers (JSON format) | ✅ Done |
+| FR-10 | System records check results (status, HTTP code, latency) | ✅ Done |
+| FR-11 | System sends email notification on status change (UP↔DOWN) | ✅ Done |
+| FR-12 | System opens incident after 3 consecutive DOWN checks | ✅ Done |
+| FR-13 | System auto-resolves incident when monitor returns UP | ✅ Done |
+| FR-14 | User can view uptime %, P50/P95/P99 latency metrics | ✅ Done |
+| FR-15 | User can view check history for any time window | ✅ Done |
+| FR-16 | User can view recent alerts and incidents | ✅ Done |
+| FR-17 | System monitors SSL certificate expiration | 🔲 Planned |
+| FR-18 | User can configure alert notification channels (Slack, webhook) | 🔲 Planned |
+
+---
+
+## Non-Functional Requirements
+
+| ID | Requirement | Implementation |
+|----|-------------|----------------|
+| NFR-01 | **Performance** — Health checks must not block each other | WebFlux WebClient (non-blocking, reactive) |
+| NFR-02 | **Scalability** — Support 100+ monitors per user | Scheduler filters only due monitors; async HTTP execution |
+| NFR-03 | **Reliability** — Scheduler must survive individual check failures | Try-catch per monitor in scheduler loop; errors logged, not propagated |
+| NFR-04 | **Security** — Passwords never stored in plaintext | BCrypt hashing via Spring Security |
+| NFR-05 | **Security** — API endpoints protected from unauthorized access | JWT + per-request filter + ownership validation |
+| NFR-06 | **Security** — No SQL injection possible | JPA parameterized queries exclusively |
+| NFR-07 | **Security** — XSS prevention in frontend | `escapeHtml()` applied to all user-supplied data |
+| NFR-08 | **Data Integrity** — Schema changes are versioned and auditable | Flyway migrations; Hibernate in validate-only mode |
+| NFR-09 | **Availability** — Database connection resilience | Connection pooling via HikariCP (Spring Boot default) |
+| NFR-10 | **Observability** — All check results and alerts are persisted | MonitorLog + Alert + Incident entities with timestamps |
+| NFR-11 | **Maintainability** — Modular codebase with clear boundaries | Feature-based package structure (modules/) |
+| NFR-12 | **Testability** — Business logic testable in isolation | Service layer with injected dependencies; H2 for tests |
+| NFR-13 | **Latency** — API responses under 200ms for CRUD operations | JPA with indexed queries; no N+1 in critical paths |
+| NFR-14 | **Deployment** — Minimal infrastructure requirements | Single JAR + PostgreSQL; Docker Compose for DB |
+
+---
+
 ## Architecture Overview
 
 The backend follows a **modular monolith** architecture. Each feature domain (auth, monitor, check, alert, notification, metrics) lives in its own package under `com.puspo.uptime.modules` with its own controller, service, repository, entity, and DTO layers.
@@ -104,7 +191,7 @@ graph TB
     AuthCtrl --> AuthSvc --> JwtUtil
     JwtFilter --> JwtUtil
     MonCtrl --> MonSvc --> MonRepo --> DB
-    Scheduler -->|@Scheduled| CheckSvc
+    Scheduler -->|"Scheduled (30s)"| CheckSvc
     CheckSvc --> Worker
     Worker -->|WebClient| Targets
     Worker --> LogRepo --> DB
@@ -346,7 +433,7 @@ sequenceDiagram
     end
 
     SC->>CT: Route to controller
-    CT->>CT: @Valid input validation
+    CT->>CT: Validate input
     CT->>SV: Delegate to service
     SV->>RP: Data access
     RP->>DB: JPA query
@@ -451,12 +538,12 @@ graph TB
 
     subgraph Authorization["Authorization"]
         OWN[Resource Ownership<br/>All queries filtered by user_id]
-        PRINCIPAL[@AuthenticationPrincipal<br/>Injects current User]
+        PRINCIPAL["AuthenticationPrincipal<br/>Injects current User"]
         PUBLIC[Public Paths<br/>/auth/**, /swagger-ui/**]
     end
 
     subgraph InputValidation["Input Validation"]
-        BEAN[@Valid Bean Validation<br/>Jakarta constraints on DTOs]
+        BEAN["Bean Validation<br/>Jakarta constraints on DTOs"]
         GEH[GlobalExceptionHandler<br/>No stack traces to client]
         PARAM[Parameterized Queries<br/>JPA prevents SQL injection]
     end
