@@ -31,3 +31,8 @@ build/
 
 ### VS Code ###
 .vscode/
+
+# IDE and local files
+.DS_Store
+.zed/
+CLAUDE.md
