@@ -5,6 +5,8 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -33,10 +35,10 @@ public class AlertServiceImpl implements AlertService {
 
     @Override
     @Transactional
+    @CacheEvict(value = {"alerts", "incidents"}, key = "#monitor.user.id")
     public void evaluateMonitorRules(Monitor monitor) {
         log.info("Evaluating alert rules for Monitor ID {} -> {}", monitor.getId(), monitor.getUrl());
         List<MonitorLog> monitorLogList = monitorLogRepository.findTop3ByMonitorIdOrderByCreatedAtDesc(monitor.getId());
-        // Check for existing open incident
         Optional<Incident> openIncident = incidentRepository
                 .findTopByMonitorIdAndResolvedAtIsNullOrderByOpenedAtDesc(monitor.getId());
 
@@ -95,6 +97,7 @@ public class AlertServiceImpl implements AlertService {
     }
 
     @Override
+    @Cacheable(value = "alerts", key = "#user.id")
     public List<AlertResponse> getRecentAlerts(User user) {
         List<Alert> userAlerts = alertRepository.findRecentAlertsByUserId(user.getId());
 
@@ -114,6 +117,7 @@ public class AlertServiceImpl implements AlertService {
     }
 
     @Override
+    @Cacheable(value = "incidents", key = "#user.id")
     public List<IncidentResponse> getRecentIncidents(User user) {
         return incidentRepository.findRecentIncidentsByUserId(user.getId()).stream()
                 .limit(20)

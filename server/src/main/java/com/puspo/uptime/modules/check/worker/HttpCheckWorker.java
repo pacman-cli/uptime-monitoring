@@ -8,7 +8,8 @@ import java.util.Map;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.puspo.uptime.modules.notification.service.EmailNotificationService;
+import com.puspo.uptime.modules.notification.service.OutboxService;
+import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.stereotype.Component;
@@ -28,17 +29,18 @@ public class HttpCheckWorker {
     private final WebClient webClient;
     private final MonitorLogRepository monitorLogRepository;
     private final AlertService alertService;
-    private final EmailNotificationService emailNotificationService;
+    private final OutboxService outboxService;
     private final ObjectMapper objectMapper;
 
-    public HttpCheckWorker(MonitorLogRepository monitorLogRepository, WebClient webClient, AlertService alertService, EmailNotificationService emailNotificationService, ObjectMapper objectMapper) {
+    public HttpCheckWorker(MonitorLogRepository monitorLogRepository, WebClient webClient, AlertService alertService, OutboxService outboxService, ObjectMapper objectMapper) {
         this.monitorLogRepository = monitorLogRepository;
         this.webClient = webClient;
         this.alertService = alertService;
-        this.emailNotificationService = emailNotificationService;
+        this.outboxService = outboxService;
         this.objectMapper = objectMapper;
     }
 
+    @CircuitBreaker(name = "http-check", fallbackMethod = "checkFallback")
     public void check(Monitor monitor) {
         log.info("Executing HTTP check for Monitor ID {} -> [{}] {}",
                 monitor.getId(),
@@ -75,9 +77,14 @@ public class HttpCheckWorker {
                     long latency = System.currentTimeMillis() - startTime;
                     log.error("Monitor {} failed: {}", monitor.getId(), error.getMessage());
                     saveLogs(monitor, "DOWN", null, latency);
-                    return Mono.empty(); // Empty Mono to indicate successful completion
+                    return Mono.empty();
                 })
                 .subscribe();
+    }
+
+    public void checkFallback(Monitor monitor, Throwable t) {
+        log.warn("Circuit breaker OPEN for monitor {} ({}). Skipping check.", monitor.getId(), monitor.getUrl());
+        saveLogs(monitor, "DOWN", null, 0L);
     }
 
     private void processResponse(Monitor monitor, long startTime, int statusCode, String body) {
@@ -150,14 +157,13 @@ public class HttpCheckWorker {
         monitorLogRepository.save(monitorLog);
 
         log.info("Saved Log: Monitor {} is {} ({}ms)", monitor.getId(), status, latency);
-        //Send email notification on status change
+
         if (wasDown && isNowUp) {
-            emailNotificationService.sendUpAlert(monitor, monitor.getUser().getEmail());
+            outboxService.saveMonitorUpEvent(monitor, monitor.getUser().getEmail());
         } else if (!wasDown && "DOWN".equals(status)) {
-            emailNotificationService.sendDownAlert(monitor, monitor.getUser().getEmail());
+            outboxService.saveMonitorDownEvent(monitor, monitor.getUser().getEmail());
         }
 
-        // Evaluate if an alert should be triggered based on this new log!
         alertService.evaluateMonitorRules(monitor);
     }
 }

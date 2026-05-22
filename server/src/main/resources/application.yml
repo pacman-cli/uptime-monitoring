@@ -31,9 +31,22 @@ spring:
           starttls:
             enable: true
 
+resilience4j:
+  circuitbreaker:
+    instances:
+      http-check:
+        sliding-window-size: 10
+        failure-rate-threshold: 60
+        wait-duration-in-open-state: 30s
+        permitted-number-of-calls-in-half-open-state: 3
+        slow-call-rate-threshold: 100
+        slow-call-duration-threshold: 10s
+
 uptime:
   scheduler:
     poll-interval-ms: 30000
+  outbox:
+    poll-interval-ms: 10000
   app:
     base-url: http://localhost:8080
   alert:
