@@ -4,7 +4,15 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import com.puspo.uptime.common.response.PaginatedResponse;
+import com.puspo.uptime.modules.monitor.entity.IdempotencyKey;
+import com.puspo.uptime.modules.monitor.repository.IdempotencyKeyRepository;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import com.puspo.uptime.common.exception.ResourceNotFoundException;
 import com.puspo.uptime.modules.auth.entity.User;
@@ -25,8 +33,19 @@ public class MonitorService {
 
     private final MonitorRepository monitorRepository;
     private final MonitorLogRepository monitorLogRepository;
+    private final IdempotencyKeyRepository idempotencyKeyRepository;
 
-    public MonitorResponse createMonitor(MonitorRequest request, User user) {
+    @Transactional
+    public MonitorResponse createMonitor(MonitorRequest request, User user, String idempotencyKey) {
+        if (idempotencyKey != null && !idempotencyKey.isBlank()) {
+            var existingKey = idempotencyKeyRepository.findByKey(idempotencyKey);
+            if (existingKey.isPresent()) {
+                Monitor existing = monitorRepository.findById(existingKey.get().getMonitorId())
+                        .orElseThrow(() -> new ResourceNotFoundException("Monitor not found"));
+                return mapToResponse(existing);
+            }
+        }
+
         validateMonitorRules(request);
 
         Monitor monitor = Monitor.builder()
@@ -42,7 +61,19 @@ public class MonitorService {
                 .sslExpiryDaysThreshold(request.getSslExpiryDaysThreshold() != null ? request.getSslExpiryDaysThreshold() : 30)
                 .build();
 
-        return mapToResponse(monitorRepository.save(monitor));
+        Monitor saved = monitorRepository.save(monitor);
+
+        if (idempotencyKey != null && !idempotencyKey.isBlank()) {
+            IdempotencyKey key = IdempotencyKey.builder()
+                    .key(idempotencyKey)
+                    .monitorId(saved.getId())
+                    .createdAt(LocalDateTime.now())
+                    .expiresAt(LocalDateTime.now().plusHours(24))
+                    .build();
+            idempotencyKeyRepository.save(key);
+        }
+
+        return mapToResponse(saved);
     }
 
     public List<MonitorResponse> getAllMonitors(User user) {
@@ -50,6 +81,29 @@ public class MonitorService {
                 .stream()
                 .map(this::mapToResponse)
                 .collect(Collectors.toList());
+    }
+
+    public PaginatedResponse<MonitorResponse> getAllMonitorsPaginated(User user, int page, int pageSize) {
+        Pageable pageable = PageRequest.of(page - 1, pageSize, Sort.by("createdAt").descending());
+        Page<Monitor> monitorPage = monitorRepository.findByUserId(user.getId(), pageable);
+
+        List<MonitorResponse> data = monitorPage.getContent().stream()
+                .map(this::mapToResponse)
+                .collect(Collectors.toList());
+
+        PaginatedResponse.Pagination pagination = PaginatedResponse.Pagination.builder()
+                .page(page)
+                .pageSize(pageSize)
+                .totalItems(monitorPage.getTotalElements())
+                .totalPages(monitorPage.getTotalPages())
+                .hasNext(monitorPage.hasNext())
+                .hasPrev(monitorPage.hasPrevious())
+                .build();
+
+        return PaginatedResponse.<MonitorResponse>builder()
+                .data(data)
+                .pagination(pagination)
+                .build();
     }
 
     public MonitorResponse getMonitorById(Long id, User user) {

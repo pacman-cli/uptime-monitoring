@@ -2,6 +2,7 @@ package com.puspo.uptime.modules.monitor.controller;
 
 import java.util.List;
 
+import com.puspo.uptime.common.response.PaginatedResponse;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -26,14 +27,18 @@ public class MonitorController {
     @PostMapping
     public ResponseEntity<MonitorResponse> createMonitor(
             @Valid @RequestBody MonitorRequest request,
-            @AuthenticationPrincipal User user) {
-        return new ResponseEntity<>(monitorService.createMonitor(request, user), HttpStatus.CREATED);
+            @AuthenticationPrincipal User user,
+            @RequestHeader(value = "Idempotency-Key", required = false) String idempotencyKey) {
+        MonitorResponse response = monitorService.createMonitor(request, user, idempotencyKey);
+        return new ResponseEntity<>(response, HttpStatus.CREATED);
     }
 
     @GetMapping
-    public ResponseEntity<List<MonitorResponse>> getAllMonitors(
-            @AuthenticationPrincipal User user) {
-        return ResponseEntity.ok(monitorService.getAllMonitors(user));
+    public ResponseEntity<PaginatedResponse<MonitorResponse>> getAllMonitors(
+            @AuthenticationPrincipal User user,
+            @RequestParam(defaultValue = "1") int page,
+            @RequestParam(defaultValue = "20") int pageSize) {
+        return ResponseEntity.ok(monitorService.getAllMonitorsPaginated(user, page, pageSize));
     }
 
     @GetMapping("/{id}")
