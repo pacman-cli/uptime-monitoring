@@ -42,6 +42,11 @@ resilience4j:
         slow-call-rate-threshold: 100
         slow-call-duration-threshold: 10s
 
+app:
+  jwt:
+    expiration: 900000
+    refresh-expiration-days: 7
+
 uptime:
   scheduler:
     poll-interval-ms: 30000

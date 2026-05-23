@@ -1,9 +1,16 @@
 package com.puspo.uptime.modules.auth.service;
 
+import java.time.LocalDateTime;
+import java.util.UUID;
+
+import com.puspo.uptime.modules.auth.entity.RefreshToken;
+import com.puspo.uptime.modules.auth.repository.RefreshTokenRepository;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import com.puspo.uptime.common.exception.ConflictException;
 import com.puspo.uptime.common.exception.ResourceNotFoundException;
@@ -21,10 +28,15 @@ import lombok.RequiredArgsConstructor;
 public class AuthService {
 
     private final UserRepository userRepository;
+    private final RefreshTokenRepository refreshTokenRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtUtil jwtUtil;
     private final AuthenticationManager authenticationManager;
 
+    @Value("${app.jwt.refresh-expiration-days:7}")
+    private int refreshExpirationDays;
+
+    @Transactional
     public AuthResponse register(RegisterRequest request) {
         if (userRepository.findByEmail(request.getEmail()).isPresent()) {
             throw new ConflictException("Email already exists");
@@ -36,15 +48,17 @@ public class AuthService {
                 .build();
 
         var savedUser = userRepository.save(user);
-        var jwtToken = jwtUtil.generateToken(savedUser);
+        var accessToken = jwtUtil.generateToken(savedUser);
+        var refreshToken = createRefreshToken(savedUser);
 
         return AuthResponse.builder()
-                .token(jwtToken)
+                .token(accessToken)
+                .refreshToken(refreshToken)
                 .build();
     }
 
+    @Transactional
     public AuthResponse login(LoginRequest request) {
-
         authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(
                         request.getEmail(),
@@ -53,10 +67,54 @@ public class AuthService {
         var user = userRepository.findByEmail(request.getEmail())
                 .orElseThrow(() -> new ResourceNotFoundException("User not found"));
 
-        var jwtToken = jwtUtil.generateToken(user);
+        var accessToken = jwtUtil.generateToken(user);
+        var refreshToken = createRefreshToken(user);
 
         return AuthResponse.builder()
-                .token(jwtToken)
+                .token(accessToken)
+                .refreshToken(refreshToken)
                 .build();
+    }
+
+    @Transactional
+    public AuthResponse refresh(String refreshToken) {
+        var storedToken = refreshTokenRepository.findByToken(refreshToken)
+                .orElseThrow(() -> new ResourceNotFoundException("Invalid refresh token"));
+
+        if (storedToken.isExpired() || storedToken.isRevoked()) {
+            throw new ResourceNotFoundException("Refresh token expired or revoked");
+        }
+
+        var user = storedToken.getUser();
+        var newAccessToken = jwtUtil.generateToken(user);
+        var newRefreshToken = createRefreshToken(user);
+
+        storedToken.revoke();
+        refreshTokenRepository.save(storedToken);
+
+        return AuthResponse.builder()
+                .token(newAccessToken)
+                .refreshToken(newRefreshToken)
+                .build();
+    }
+
+    @Transactional
+    public void logout(String refreshToken) {
+        refreshTokenRepository.findByToken(refreshToken)
+                .ifPresent(RefreshToken::revoke);
+    }
+
+    private String createRefreshToken(User user) {
+        refreshTokenRepository.deleteByUser(user);
+
+        String token = UUID.randomUUID().toString();
+        RefreshToken refreshToken = RefreshToken.builder()
+                .token(token)
+                .user(user)
+                .expiresAt(LocalDateTime.now().plusDays(refreshExpirationDays))
+                .build();
+
+        refreshTokenRepository.save(refreshToken);
+        return token;
     }
 }
