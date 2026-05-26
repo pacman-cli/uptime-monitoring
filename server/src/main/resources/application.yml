@@ -20,10 +20,10 @@ spring:
     baseline-on-migrate: true
     baseline-version: 0
   mail:
-    host: smtp.gmail.com
-    port: 587
-    username: puspo@gmail.com
-    password: puspo123
+    host: ${SMTP_HOST:smtp.gmail.com}
+    port: ${SMTP_PORT:587}
+    username: ${SMTP_USERNAME}
+    password: ${SMTP_PASSWORD}
     properties:
       mail:
         smtp:
@@ -57,4 +57,4 @@ uptime:
   alert:
     email:
       enabled: true
-      from: puspo@gmail.com
+      from: ${SMTP_USERNAME}

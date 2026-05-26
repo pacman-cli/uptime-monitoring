@@ -29,18 +29,19 @@ public class AuthController {
   }
 
   @PostMapping("/refresh")
-  public ResponseEntity<AuthResponse> refresh(@RequestBody RefreshRequest request) {
+  public ResponseEntity<AuthResponse> refresh(@Valid @RequestBody RefreshRequest request) {
     return ResponseEntity.ok(authService.refresh(request.getRefreshToken()));
   }
 
   @PostMapping("/logout")
-  public ResponseEntity<Void> logout(@RequestBody RefreshRequest request) {
+  public ResponseEntity<Void> logout(@Valid @RequestBody RefreshRequest request) {
     authService.logout(request.getRefreshToken());
     return ResponseEntity.noContent().build();
   }
 
   @lombok.Data
   public static class RefreshRequest {
+    @jakarta.validation.constraints.NotBlank(message = "Refresh token is required")
     private String refreshToken;
   }
 }

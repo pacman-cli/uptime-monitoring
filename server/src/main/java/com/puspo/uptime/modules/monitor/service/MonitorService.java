@@ -38,7 +38,7 @@ public class MonitorService {
     @Transactional
     public MonitorResponse createMonitor(MonitorRequest request, User user, String idempotencyKey) {
         if (idempotencyKey != null && !idempotencyKey.isBlank()) {
-            var existingKey = idempotencyKeyRepository.findByKey(idempotencyKey);
+            var existingKey = idempotencyKeyRepository.findByKeyAndNotExpired(idempotencyKey, LocalDateTime.now());
             if (existingKey.isPresent()) {
                 Monitor existing = monitorRepository.findById(existingKey.get().getMonitorId())
                         .orElseThrow(() -> new ResourceNotFoundException("Monitor not found"));

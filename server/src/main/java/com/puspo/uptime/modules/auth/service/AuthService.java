@@ -6,6 +6,7 @@ import java.util.UUID;
 import com.puspo.uptime.modules.auth.entity.RefreshToken;
 import com.puspo.uptime.modules.auth.repository.RefreshTokenRepository;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -104,9 +105,13 @@ public class AuthService {
                 .ifPresent(RefreshToken::revoke);
     }
 
-    private String createRefreshToken(User user) {
-        refreshTokenRepository.deleteByUser(user);
+    @Scheduled(fixedDelay = 3600000) // every hour
+    @Transactional
+    public void cleanupExpiredRefreshTokens() {
+        refreshTokenRepository.deleteExpired(LocalDateTime.now());
+    }
 
+    private String createRefreshToken(User user) {
         String token = UUID.randomUUID().toString();
         RefreshToken refreshToken = RefreshToken.builder()
                 .token(token)

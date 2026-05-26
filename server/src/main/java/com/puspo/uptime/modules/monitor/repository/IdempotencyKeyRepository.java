@@ -14,6 +14,9 @@ public interface IdempotencyKeyRepository extends JpaRepository<IdempotencyKey, 
 
     Optional<IdempotencyKey> findByKey(String key);
 
+    @Query("SELECT i FROM IdempotencyKey i WHERE i.key = :key AND i.expiresAt > :now")
+    Optional<IdempotencyKey> findByKeyAndNotExpired(String key, LocalDateTime now);
+
     @Modifying
     @Query("DELETE FROM IdempotencyKey i WHERE i.expiresAt < :threshold")
     void deleteExpired(LocalDateTime threshold);

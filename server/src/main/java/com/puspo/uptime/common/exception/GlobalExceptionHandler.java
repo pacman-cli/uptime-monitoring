@@ -1,15 +1,18 @@
 package com.puspo.uptime.common.exception;
 
 import java.time.LocalDateTime;
-import java.util.UUID;
 
 import com.puspo.uptime.common.response.ErrorResponse;
+import com.puspo.uptime.config.RequestLoggingFilter;
+import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.context.request.RequestContextHolder;
+import org.springframework.web.context.request.ServletRequestAttributes;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
@@ -47,7 +50,7 @@ public class GlobalExceptionHandler {
         .code("VALIDATION_FAILED")
         .message("One or more fields are invalid")
         .details(details)
-        .traceId(generateTraceId())
+        .traceId(getTraceId())
         .timestamp(LocalDateTime.now())
         .build();
 
@@ -63,14 +66,22 @@ public class GlobalExceptionHandler {
     var response = ErrorResponse.builder()
         .code(code)
         .message(message)
-        .traceId(generateTraceId())
+        .traceId(getTraceId())
         .timestamp(LocalDateTime.now())
         .build();
     return new ResponseEntity<>(new ApiError(response), status);
   }
 
-  private String generateTraceId() {
-    return UUID.randomUUID().toString().replace("-", "").substring(0, 16);
+  private String getTraceId() {
+    var attrs = (ServletRequestAttributes) RequestContextHolder.getRequestAttributes();
+    if (attrs != null) {
+      HttpServletRequest request = attrs.getRequest();
+      String traceId = RequestLoggingFilter.getTraceId(request);
+      if (traceId != null) {
+        return traceId;
+      }
+    }
+    return "unknown";
   }
 
   public static class ApiError {

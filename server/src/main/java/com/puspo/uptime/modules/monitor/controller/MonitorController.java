@@ -38,6 +38,7 @@ public class MonitorController {
             @AuthenticationPrincipal User user,
             @RequestParam(defaultValue = "1") int page,
             @RequestParam(defaultValue = "20") int pageSize) {
+        pageSize = Math.min(Math.max(pageSize, 1), 100);
         return ResponseEntity.ok(monitorService.getAllMonitorsPaginated(user, page, pageSize));
     }
 
