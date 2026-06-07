@@ -172,6 +172,13 @@
 
             <form id="monitorForm" class="p-6 space-y-5">
                 <div>
+                    <label class="block text-sm font-medium text-slate-300 mb-1">Monitor Name</label>
+                    <input type="text" id="monitorName" required
+                        class="w-full bg-background border border-slate-700/50 rounded-lg px-4 py-2.5 text-white focus:outline-none focus:border-brand transition"
+                        placeholder="My API Health Check">
+                </div>
+
+                <div>
                     <label class="block text-sm font-medium text-slate-300 mb-1">Target URL</label>
                     <input type="url" id="monitorUrl" required
                         class="w-full bg-background border border-slate-700/50 rounded-lg px-4 py-2.5 text-white focus:outline-none focus:border-brand transition"

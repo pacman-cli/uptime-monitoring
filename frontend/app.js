@@ -669,6 +669,7 @@ function openEditModal(monitorId) {
 
     dashboardState.editingMonitorId = monitorId
 
+    document.getElementById('monitorName').value = monitor.name || ''
     document.getElementById('monitorUrl').value = monitor.url
     document.getElementById('monitorMethod').value = monitor.method
     document.getElementById('monitorInterval').value = monitor.intervalSeconds
@@ -958,6 +959,7 @@ if (monitorForm) {
         const activeInput = document.getElementById('monitorActive')
 
         const payload = {
+            name: document.getElementById('monitorName').value.trim(),
             url: document.getElementById('monitorUrl').value.trim(),
             method: document.getElementById('monitorMethod').value,
             intervalSeconds: parseInt(document.getElementById('monitorInterval').value, 10) || 60,
