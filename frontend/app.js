@@ -1,4 +1,4 @@
-const API_URL = window.__API_URL__ || 'https://uptime-monitoring-backend-5zxi.onrender.com/api/v1'
+const API_URL = window.__API_URL__ || 'https://uptime-backend-gpm7.onrender.com/api/v1'
 
 const dashboardState = {
     monitors: [],
