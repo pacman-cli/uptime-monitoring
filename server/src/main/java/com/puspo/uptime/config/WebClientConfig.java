@@ -13,17 +13,17 @@ import java.time.Duration;
 @Configuration
 public class WebClientConfig {
 
-  private HttpClient httpClient;
+  private ConnectionProvider connectionProvider;
 
   @Bean
   public WebClient webClient() {
-    ConnectionProvider provider = ConnectionProvider.builder("uptime-http")
+    this.connectionProvider = ConnectionProvider.builder("uptime-http")
         .maxConnections(50)
         .maxIdleTime(Duration.ofSeconds(30))
         .pendingAcquireTimeout(Duration.ofSeconds(10))
         .build();
 
-    this.httpClient = HttpClient.create(provider)
+    HttpClient httpClient = HttpClient.create(connectionProvider)
         .responseTimeout(Duration.ofSeconds(30));
 
     return WebClient.builder()
@@ -33,8 +33,8 @@ public class WebClientConfig {
 
   @PreDestroy
   public void shutdown() {
-    if (httpClient != null) {
-      httpClient.dispose();
+    if (connectionProvider != null) {
+      connectionProvider.dispose();
     }
   }
 }
