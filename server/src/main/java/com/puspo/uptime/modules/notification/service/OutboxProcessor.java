@@ -79,6 +79,7 @@ public class OutboxProcessor {
     private void cleanup(Long eventId) {
         retryCounts.remove(eventId);
         lastAttemptTimes.remove(eventId);
+    }
 
     private void processEvent(OutboxEvent event) throws Exception {
         Map<String, Object> payload = objectMapper.readValue(event.getPayload(), Map.class);
