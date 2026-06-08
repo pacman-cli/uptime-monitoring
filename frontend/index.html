@@ -8,6 +8,11 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="styles.css">
     <script>
+        if (!localStorage.getItem('uptime_jwt')) {
+            window.location.href = 'login.html'
+        }
+    </script>
+    <script>
         tailwind.config = {
             darkMode: 'class',
             theme: {
