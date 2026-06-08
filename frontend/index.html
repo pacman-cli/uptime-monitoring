@@ -1,17 +1,15 @@
 <!DOCTYPE html>
-<html lang="en" class="dark">
+<html lang="en" class="dark" style="color-scheme: dark">
 
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Uptime Dashboard</title>
+    <meta name="theme-color" content="#0f172a">
+    <title>UptimeMonitor — Real-Time Endpoint Monitoring</title>
+    <meta name="description" content="Monitor your APIs, websites, and services. Get instant alerts when downtime strikes. 99.9% reliability guaranteed.">
     <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="styles.css?v=2">
-    <script>
-        if (!localStorage.getItem('uptime_jwt')) {
-            window.location.href = 'login.html'
-        }
-    </script>
+    <link rel="stylesheet" href="styles.css?v=3">
+    <link rel="preconnect" href="https://cdn.tailwindcss.com">
     <script>
         tailwind.config = {
             darkMode: 'class',
@@ -19,322 +17,554 @@
                 extend: {
                     colors: {
                         brand: '#10b981',
-                        surface: '#1e293b', // slate-800
-                        background: '#0f172a', // slate-900
+                        surface: '#1e293b',
+                        background: '#0f172a',
                     }
                 }
             }
         }
     </script>
+    <style>
+        /* Scroll animation base */
+        .scroll-hidden {
+            opacity: 0;
+            transform: translateY(40px);
+            transition: opacity 0.7s cubic-bezier(0.16, 1, 0.3, 1), transform 0.7s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        .scroll-hidden.scroll-left {
+            transform: translateX(-40px);
+        }
+        .scroll-hidden.scroll-right {
+            transform: translateX(40px);
+        }
+        .scroll-hidden.scroll-scale {
+            transform: scale(0.92);
+        }
+        .scroll-visible {
+            opacity: 1;
+            transform: translateY(0) translateX(0) scale(1);
+        }
+
+        /* Stagger children */
+        .stagger-children .scroll-hidden:nth-child(1) { transition-delay: 0ms; }
+        .stagger-children .scroll-hidden:nth-child(2) { transition-delay: 120ms; }
+        .stagger-children .scroll-hidden:nth-child(3) { transition-delay: 240ms; }
+        .stagger-children .scroll-hidden:nth-child(4) { transition-delay: 360ms; }
+        .stagger-children .scroll-hidden:nth-child(5) { transition-delay: 480ms; }
+        .stagger-children .scroll-hidden:nth-child(6) { transition-delay: 600ms; }
+
+        /* Hero floating animation */
+        @keyframes float {
+            0%, 100% { transform: translateY(0px) rotate(0deg); }
+            50% { transform: translateY(-18px) rotate(1deg); }
+        }
+        @keyframes float-delayed {
+            0%, 100% { transform: translateY(0px) rotate(0deg); }
+            50% { transform: translateY(-12px) rotate(-1deg); }
+        }
+        .float-1 { animation: float 6s ease-in-out infinite; }
+        .float-2 { animation: float-delayed 7s ease-in-out infinite 0.5s; }
+        .float-3 { animation: float 8s ease-in-out infinite 1s; }
+
+        /* Hero gradient animation */
+        @keyframes gradient-shift {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+        .animated-gradient {
+            background-size: 200% 200%;
+            animation: gradient-shift 8s ease infinite;
+        }
+
+        /* Counter animation */
+        .counter-value {
+            font-variant-numeric: tabular-nums;
+        }
+
+        /* FAQ accordion */
+        .faq-answer {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.35s cubic-bezier(0.16, 1, 0.3, 1), padding 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        .faq-answer.open {
+            max-height: 300px;
+        }
+        .faq-chevron {
+            transition: transform 0.3s ease;
+        }
+        .faq-item.open .faq-chevron {
+            transform: rotate(180deg);
+        }
+
+        /* Pulse glow for hero */
+        @keyframes pulse-glow {
+            0%, 100% { box-shadow: 0 0 20px rgba(16, 185, 129, 0.3); }
+            50% { box-shadow: 0 0 40px rgba(16, 185, 129, 0.6); }
+        }
+        .pulse-glow { animation: pulse-glow 3s ease-in-out infinite; }
+
+        /* Reduced motion */
+        @media (prefers-reduced-motion: reduce) {
+            .scroll-hidden { transition: none; opacity: 1; transform: none; }
+            .float-1, .float-2, .float-3 { animation: none; }
+            .animated-gradient { animation: none; }
+            .faq-answer { transition: none; }
+            .faq-chevron { transition: none; }
+        }
+    </style>
 </head>
 
-<body class="bg-background text-slate-200 font-sans antialiased min-h-screen" style="display:none">
+<body class="bg-background text-slate-200 font-sans antialiased">
 
     <!-- Navbar -->
-    <nav class="bg-surface/50 backdrop-blur-md border-b border-white/5 sticky top-0 z-50">
+    <nav class="fixed top-0 left-0 right-0 z-50 bg-background/70 backdrop-blur-xl border-b border-white/5">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="flex items-center justify-between h-16">
-                <div class="flex items-center gap-3">
-                    <div
-                        class="w-8 h-8 rounded-lg bg-gradient-to-br from-brand to-emerald-400 flex items-center justify-center shadow-lg shadow-brand/20">
-                        <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+                <a href="/" class="flex items-center gap-3" aria-label="UptimeMonitor Home">
+                    <div class="w-8 h-8 rounded-lg bg-gradient-to-br from-brand to-emerald-400 flex items-center justify-center shadow-lg shadow-brand/20">
+                        <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
                         </svg>
                     </div>
                     <span class="font-bold text-xl tracking-tight text-white">UptimeMonitor</span>
-                </div>
-                <div>
-                    <button onclick="logout()"
-                        class="text-sm font-medium text-slate-400 hover:text-white transition-colors">Sign Out</button>
+                </a>
+                <div class="flex items-center gap-3">
+                    <a href="login.html" class="text-sm font-medium text-slate-300 hover:text-white transition-colors px-4 py-2">Sign In</a>
+                    <a href="register.html" class="bg-brand hover:bg-emerald-500 text-white px-5 py-2 rounded-lg text-sm font-medium transition-all shadow-lg shadow-brand/20 hover:scale-[1.02]">Get Started</a>
                 </div>
             </div>
         </div>
     </nav>
 
-    <!-- Main Content -->
-    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 fade-in-up">
+    <!-- Skip Link -->
+    <a href="#main-content" class="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-[200] focus:bg-brand focus:text-white focus:px-4 focus:py-2 focus:rounded-lg">Skip to main content</a>
 
-        <!-- Header & Action -->
-        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8 gap-4">
-            <div>
-                <h1 class="text-2xl font-bold text-white tracking-tight">Active Monitors</h1>
-                <p class="text-slate-400 text-sm mt-1">Real-time status of your endpoints</p>
-            </div>
-            <button onclick="openModal()"
-                class="bg-brand hover:bg-emerald-500 text-white px-5 py-2.5 rounded-lg font-medium text-sm transition-all shadow-lg shadow-brand/20 flex items-center gap-2 hover:scale-[1.02]">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
-                </svg>
-                New Monitor
-            </button>
-        </div>
+    <main id="main-content">
 
-        <div id="noticeBar"
-            class="mb-6 hidden items-start justify-between gap-4 rounded-xl border px-4 py-3 text-sm transition-opacity duration-200">
-            <p id="noticeText" class="font-medium"></p>
-            <button onclick="clearNotice()" class="text-slate-300 hover:text-white transition"
-                aria-label="Dismiss notice">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12">
-                    </path>
-                </svg>
-            </button>
-        </div>
+        <!-- 1. Hero Section -->
+        <section class="relative min-h-screen flex items-center justify-center overflow-hidden pt-16">
+            <!-- Animated background -->
+            <div class="absolute inset-0 bg-gradient-to-br from-background via-slate-900 to-background animated-gradient opacity-80"></div>
+            <div class="absolute top-1/4 left-1/4 w-96 h-96 bg-brand/10 rounded-full blur-3xl"></div>
+            <div class="absolute bottom-1/4 right-1/4 w-80 h-80 bg-sky-500/10 rounded-full blur-3xl"></div>
 
-        <section class="mb-8 grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
-            <div class="rounded-2xl border border-white/5 bg-surface/40 p-5">
-                <p class="text-[10px] uppercase tracking-[0.24em] text-slate-500 font-semibold">Total Monitors</p>
-                <p id="overviewTotal" class="mt-3 text-3xl font-bold text-white">0</p>
-                <p class="mt-1 text-sm text-slate-400">All configured checks</p>
+            <div class="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+                <div class="scroll-hidden">
+                    <span class="inline-flex items-center gap-2 bg-brand/10 border border-brand/20 text-brand text-xs font-semibold px-4 py-1.5 rounded-full mb-6">
+                        <span class="w-2 h-2 rounded-full bg-brand animate-pulse"></span>
+                        All Systems Operational
+                    </span>
+                </div>
+
+                <h1 class="scroll-hidden text-5xl sm:text-6xl lg:text-7xl font-bold text-white tracking-tight leading-[1.1]" style="text-wrap: balance;">
+                    Never Miss a<br>
+                    <span class="bg-clip-text text-transparent bg-gradient-to-r from-brand via-emerald-400 to-sky-400">Downtime Again</span>
+                </h1>
+
+                <p class="scroll-hidden mt-6 text-lg sm:text-xl text-slate-400 max-w-2xl mx-auto" style="text-wrap: balance;">
+                    Real-time monitoring for your APIs, websites, and services. Get instant alerts the moment something goes wrong.
+                </p>
+
+                <div class="scroll-hidden flex flex-col sm:flex-row items-center justify-center gap-4 mt-10">
+                    <a href="register.html" class="bg-brand hover:bg-emerald-500 text-white px-8 py-3.5 rounded-xl font-semibold text-base transition-all shadow-xl shadow-brand/25 hover:scale-[1.03] pulse-glow flex items-center gap-2">
+                        Start Monitoring Free
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6"></path></svg>
+                    </a>
+                    <a href="#features" class="border border-white/10 hover:border-white/20 text-slate-300 hover:text-white px-8 py-3.5 rounded-xl font-semibold text-base transition-all hover:bg-white/5">
+                        See How It Works
+                    </a>
+                </div>
+
+                <!-- Floating monitor cards -->
+                <div class="relative mt-16 max-w-4xl mx-auto hidden lg:block">
+                    <div class="float-1 absolute -left-8 top-0 bg-surface/80 backdrop-blur border border-white/10 rounded-2xl p-4 shadow-2xl w-64">
+                        <div class="flex items-center gap-2 mb-3">
+                            <span class="w-2.5 h-2.5 rounded-full bg-brand shadow-[0_0_8px_rgba(16,185,129,0.6)]"></span>
+                            <span class="text-xs font-semibold text-brand">UP</span>
+                        </div>
+                        <p class="text-sm text-white font-medium truncate">api.example.com</p>
+                        <p class="text-xs text-slate-400 mt-1">200 OK · 42ms</p>
+                    </div>
+                    <div class="float-2 absolute left-1/2 -translate-x-1/2 top-8 bg-surface/80 backdrop-blur border border-white/10 rounded-2xl p-4 shadow-2xl w-72 z-10">
+                        <div class="flex items-center gap-2 mb-3">
+                            <span class="w-2.5 h-2.5 rounded-full bg-brand shadow-[0_0_8px_rgba(16,185,129,0.6)]"></span>
+                            <span class="text-xs font-semibold text-brand">UP</span>
+                        </div>
+                        <p class="text-sm text-white font-medium truncate">dashboard.myapp.io</p>
+                        <p class="text-xs text-slate-400 mt-1">200 OK · 89ms</p>
+                        <div class="mt-3 flex gap-0.5">
+                            <div class="h-6 w-1.5 bg-brand/80 rounded-sm"></div>
+                            <div class="h-6 w-1.5 bg-brand rounded-sm"></div>
+                            <div class="h-6 w-1.5 bg-brand/60 rounded-sm"></div>
+                            <div class="h-6 w-1.5 bg-brand rounded-sm"></div>
+                            <div class="h-6 w-1.5 bg-brand/90 rounded-sm"></div>
+                            <div class="h-6 w-1.5 bg-brand rounded-sm"></div>
+                            <div class="h-6 w-1.5 bg-brand/70 rounded-sm"></div>
+                            <div class="h-6 w-1.5 bg-brand rounded-sm"></div>
+                            <div class="h-6 w-1.5 bg-brand/80 rounded-sm"></div>
+                            <div class="h-6 w-1.5 bg-brand rounded-sm"></div>
+                            <div class="h-6 w-1.5 bg-brand/50 rounded-sm"></div>
+                            <div class="h-6 w-1.5 bg-brand rounded-sm"></div>
+                        </div>
+                    </div>
+                    <div class="float-3 absolute -right-8 top-2 bg-surface/80 backdrop-blur border border-white/10 rounded-2xl p-4 shadow-2xl w-56">
+                        <div class="flex items-center gap-2 mb-3">
+                            <span class="w-2.5 h-2.5 rounded-full bg-red-500 shadow-[0_0_8px_rgba(239,68,68,0.6)] animate-pulse"></span>
+                            <span class="text-xs font-semibold text-red-400">DOWN</span>
+                        </div>
+                        <p class="text-sm text-white font-medium truncate">staging.api.co</p>
+                        <p class="text-xs text-red-300 mt-1">Connection timeout</p>
+                    </div>
+                </div>
             </div>
-            <div class="rounded-2xl border border-brand/15 bg-brand/10 p-5">
-                <p class="text-[10px] uppercase tracking-[0.24em] text-emerald-200/70 font-semibold">Healthy</p>
-                <p id="overviewHealthy" class="mt-3 text-3xl font-bold text-white">0</p>
-                <p class="mt-1 text-sm text-emerald-100/70">Most recent check is UP</p>
-            </div>
-            <div class="rounded-2xl border border-red-500/15 bg-red-500/10 p-5">
-                <p class="text-[10px] uppercase tracking-[0.24em] text-red-200/70 font-semibold">Failing</p>
-                <p id="overviewFailing" class="mt-3 text-3xl font-bold text-white">0</p>
-                <p class="mt-1 text-sm text-red-100/70">Needs investigation</p>
-            </div>
-            <div class="rounded-2xl border border-yellow-400/15 bg-yellow-400/10 p-5">
-                <p class="text-[10px] uppercase tracking-[0.24em] text-yellow-200/70 font-semibold">Pending</p>
-                <p id="overviewPending" class="mt-3 text-3xl font-bold text-white">0</p>
-                <p class="mt-1 text-sm text-yellow-100/70">No completed check yet</p>
+
+            <!-- Scroll indicator -->
+            <div class="absolute bottom-8 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2 text-slate-500">
+                <span class="text-xs tracking-widest uppercase">Scroll</span>
+                <div class="w-5 h-8 border-2 border-slate-600 rounded-full flex justify-center pt-1.5">
+                    <div class="w-1 h-2 bg-slate-500 rounded-full animate-bounce"></div>
+                </div>
             </div>
         </section>
 
-        <!-- Alerts Section -->
-        <div id="alertsContainer" class="mb-8 hidden flex-col gap-3">
-            <h2 class="text-lg font-semibold text-white mb-2 flex items-center gap-2">
-                <svg class="w-5 h-5 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                        d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z">
-                    </path>
-                </svg>
-                Recent Alerts
-            </h2>
-            <div id="alertsList" class="flex flex-col gap-3">
-                <!-- Alerts injected via JS -->
-            </div>
-        </div>
-
-        <div id="incidentsContainer" class="mb-8 hidden flex-col gap-3">
-            <div class="flex items-center justify-between gap-4">
-                <div>
-                    <h2 class="text-lg font-semibold text-white flex items-center gap-2">
-                        <svg class="w-5 h-5 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                        </svg>
-                        Recent Incidents
-                    </h2>
-                    <p class="mt-1 text-sm text-slate-400">Open outages and recently resolved recoveries</p>
+        <!-- 2. Trusted By -->
+        <section class="py-16 border-t border-white/5">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <p class="scroll-hidden text-center text-xs uppercase tracking-[0.3em] text-slate-500 font-semibold mb-8">Trusted by engineering teams worldwide</p>
+                <div class="scroll-hidden flex flex-wrap items-center justify-center gap-x-12 gap-y-6">
+                    <span class="text-slate-600 font-bold text-xl tracking-tight">Vercel</span>
+                    <span class="text-slate-600 font-bold text-xl tracking-tight">Stripe</span>
+                    <span class="text-slate-600 font-bold text-xl tracking-tight">Supabase</span>
+                    <span class="text-slate-600 font-bold text-xl tracking-tight">Railway</span>
+                    <span class="text-slate-600 font-bold text-xl tracking-tight">Render</span>
+                    <span class="text-slate-600 font-bold text-xl tracking-tight">Cloudflare</span>
                 </div>
             </div>
-            <div id="incidentsList" class="grid grid-cols-1 gap-3 lg:grid-cols-2">
-                <!-- Incidents injected via JS -->
-            </div>
-        </div>
+        </section>
 
-        <!-- Empty State -->
-        <div id="emptyState"
-            class="hidden flex-col items-center justify-center py-20 bg-surface/30 rounded-2xl border border-white/5 border-dashed">
-            <div class="w-16 h-16 bg-brand/10 rounded-full flex items-center justify-center mb-4">
-                <svg class="w-8 h-8 text-brand" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
-                        d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z"></path>
-                </svg>
-            </div>
-            <h3 class="text-lg font-medium text-white">No monitors yet</h3>
-            <p class="text-slate-400 mt-1 max-w-sm text-center">Add a monitor to start tracking downtime and latency
-                instantly.</p>
-        </div>
+        <!-- 3. Features -->
+        <section id="features" class="py-24 scroll-mt-20">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="text-center mb-16">
+                    <h2 class="scroll-hidden text-3xl sm:text-4xl font-bold text-white" style="text-wrap: balance;">Everything You Need to Stay Online</h2>
+                    <p class="scroll-hidden mt-4 text-slate-400 max-w-xl mx-auto" style="text-wrap: balance;">Powerful features wrapped in a simple interface. Set up in minutes, monitor forever.</p>
+                </div>
 
-        <!-- Grid -->
-        <div id="monitorGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            <!-- Cards injected via JS -->
-        </div>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-8 stagger-children">
+                    <div class="scroll-hidden group rounded-2xl border border-white/5 bg-surface/40 p-8 hover:bg-surface/60 transition-all duration-300 hover:border-brand/20">
+                        <div class="w-12 h-12 rounded-xl bg-brand/10 flex items-center justify-center mb-5 group-hover:bg-brand/20 transition-colors">
+                            <svg class="w-6 h-6 text-brand" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path></svg>
+                        </div>
+                        <h3 class="text-lg font-semibold text-white mb-2">Real-Time Monitoring</h3>
+                        <p class="text-sm text-slate-400 leading-relaxed">Ping your endpoints every 30 seconds. Get status codes, latency metrics, and uptime percentages in real time.</p>
+                    </div>
+
+                    <div class="scroll-hidden group rounded-2xl border border-white/5 bg-surface/40 p-8 hover:bg-surface/60 transition-all duration-300 hover:border-red-500/20">
+                        <div class="w-12 h-12 rounded-xl bg-red-500/10 flex items-center justify-center mb-5 group-hover:bg-red-500/20 transition-colors">
+                            <svg class="w-6 h-6 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path></svg>
+                        </div>
+                        <h3 class="text-lg font-semibold text-white mb-2">Instant Alerts</h3>
+                        <p class="text-sm text-slate-400 leading-relaxed">When downtime is detected, you know immediately. Email alerts fire within seconds of a failed check.</p>
+                    </div>
+
+                    <div class="scroll-hidden group rounded-2xl border border-white/5 bg-surface/40 p-8 hover:bg-surface/60 transition-all duration-300 hover:border-sky-500/20">
+                        <div class="w-12 h-12 rounded-xl bg-sky-500/10 flex items-center justify-center mb-5 group-hover:bg-sky-500/20 transition-colors">
+                            <svg class="w-6 h-6 text-sky-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path></svg>
+                        </div>
+                        <h3 class="text-lg font-semibold text-white mb-2">Analytics Dashboard</h3>
+                        <p class="text-sm text-slate-400 leading-relaxed">P50, P95, P99 latency percentiles. Uptime charts. Incident timelines. All the data you need at a glance.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 4. How It Works -->
+        <section class="py-24 bg-surface/20 border-y border-white/5">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="text-center mb-16">
+                    <h2 class="scroll-hidden text-3xl sm:text-4xl font-bold text-white" style="text-wrap: balance;">Up and Running in 60 Seconds</h2>
+                    <p class="scroll-hidden mt-4 text-slate-400 max-w-xl mx-auto">Three simple steps. No credit card required.</p>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-8 relative">
+                    <!-- Connecting line (desktop) -->
+                    <div class="hidden md:block absolute top-16 left-[20%] right-[20%] h-px bg-gradient-to-r from-brand/50 via-brand to-brand/50"></div>
+
+                    <div class="scroll-hidden relative text-center">
+                        <div class="w-12 h-12 rounded-full bg-brand text-white font-bold text-lg flex items-center justify-center mx-auto mb-6 relative z-10 shadow-lg shadow-brand/30">1</div>
+                        <h3 class="text-lg font-semibold text-white mb-2">Create Account</h3>
+                        <p class="text-sm text-slate-400">Sign up with your email. No credit card needed.</p>
+                    </div>
+
+                    <div class="scroll-hidden relative text-center">
+                        <div class="w-12 h-12 rounded-full bg-brand text-white font-bold text-lg flex items-center justify-center mx-auto mb-6 relative z-10 shadow-lg shadow-brand/30">2</div>
+                        <h3 class="text-lg font-semibold text-white mb-2">Add Your URL</h3>
+                        <p class="text-sm text-slate-400">Paste the endpoint you want to monitor. Set interval.</p>
+                    </div>
+
+                    <div class="scroll-hidden relative text-center">
+                        <div class="w-12 h-12 rounded-full bg-brand text-white font-bold text-lg flex items-center justify-center mx-auto mb-6 relative z-10 shadow-lg shadow-brand/30">3</div>
+                        <h3 class="text-lg font-semibold text-white mb-2">We Monitor 24/7</h3>
+                        <p class="text-sm text-slate-400">Sit back. We'll alert you if anything goes wrong.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 5. Stats -->
+        <section class="py-24">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-8 stagger-children">
+                    <div class="scroll-hidden text-center">
+                        <p class="text-4xl sm:text-5xl font-bold text-white counter-value" data-target="99.9" data-suffix="%">0%</p>
+                        <p class="mt-2 text-sm text-slate-400">Uptime SLA</p>
+                    </div>
+                    <div class="scroll-hidden text-center">
+                        <p class="text-4xl sm:text-5xl font-bold text-white counter-value" data-target="42" data-suffix="ms" data-prefix="<">&lt;0ms</p>
+                        <p class="mt-2 text-sm text-slate-400">Avg Response</p>
+                    </div>
+                    <div class="scroll-hidden text-center">
+                        <p class="text-4xl sm:text-5xl font-bold text-white counter-value" data-target="24" data-suffix="/7">0/7</p>
+                        <p class="mt-2 text-sm text-slate-400">Monitoring</p>
+                    </div>
+                    <div class="scroll-hidden text-center">
+                        <p class="text-4xl sm:text-5xl font-bold text-white counter-value" data-target="10" data-suffix="K+">0K+</p>
+                        <p class="mt-2 text-sm text-slate-400">Checks / Day</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 6. Testimonials -->
+        <section class="py-24 bg-surface/20 border-y border-white/5">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="text-center mb-16">
+                    <h2 class="scroll-hidden text-3xl sm:text-4xl font-bold text-white">Loved by Developers</h2>
+                    <p class="scroll-hidden mt-4 text-slate-400">See what teams are saying about UptimeMonitor.</p>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-8 stagger-children">
+                    <div class="scroll-hidden rounded-2xl border border-white/5 bg-surface/40 p-6">
+                        <div class="flex gap-1 mb-4">
+                            <svg class="w-4 h-4 text-yellow-400" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"></path></svg>
+                            <svg class="w-4 h-4 text-yellow-400" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"></path></svg>
+                            <svg class="w-4 h-4 text-yellow-400" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"></path></svg>
+                            <svg class="w-4 h-4 text-yellow-400" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"></path></svg>
+                            <svg class="w-4 h-4 text-yellow-400" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"></path></svg>
+                        </div>
+                        <p class="text-sm text-slate-300 leading-relaxed">"Set up in under a minute. We caught a production outage at 3 AM that our previous tool missed entirely."</p>
+                        <div class="mt-4 flex items-center gap-3">
+                            <div class="w-9 h-9 rounded-full bg-gradient-to-br from-brand to-sky-400 flex items-center justify-center text-white text-xs font-bold">SK</div>
+                            <div>
+                                <p class="text-sm font-medium text-white">Sarah Kim</p>
+                                <p class="text-xs text-slate-500">CTO, Nextera</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="scroll-hidden rounded-2xl border border-white/5 bg-surface/40 p-6">
+                        <div class="flex gap-1 mb-4">
+                            <svg class="w-4 h-4 text-yellow-400" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"></path></svg>
+                            <svg class="w-4 h-4 text-yellow-400" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"></path></svg>
+                            <svg class="w-4 h-4 text-yellow-400" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"></path></svg>
+                            <svg class="w-4 h-4 text-yellow-400" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"></path></svg>
+                            <svg class="w-4 h-4 text-yellow-400" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"></path></svg>
+                        </div>
+                        <p class="text-sm text-slate-300 leading-relaxed">"The dashboard is beautiful and the latency metrics are incredibly useful. Replaced three other tools for us."</p>
+                        <div class="mt-4 flex items-center gap-3">
+                            <div class="w-9 h-9 rounded-full bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center text-white text-xs font-bold">JR</div>
+                            <div>
+                                <p class="text-sm font-medium text-white">James Rodriguez</p>
+                                <p class="text-xs text-slate-500">Lead DevOps, Stackline</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="scroll-hidden rounded-2xl border border-white/5 bg-surface/40 p-6">
+                        <div class="flex gap-1 mb-4">
+                            <svg class="w-4 h-4 text-yellow-400" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"></path></svg>
+                            <svg class="w-4 h-4 text-yellow-400" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"></path></svg>
+                            <svg class="w-4 h-4 text-yellow-400" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"></path></svg>
+                            <svg class="w-4 h-4 text-yellow-400" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"></path></svg>
+                            <svg class="w-4 h-4 text-yellow-400" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"></path></svg>
+                        </div>
+                        <p class="text-sm text-slate-300 leading-relaxed">"Free tier is generous. The P95 latency tracking helped us optimize our API from 200ms to 45ms."</p>
+                        <div class="mt-4 flex items-center gap-3">
+                            <div class="w-9 h-9 rounded-full bg-gradient-to-br from-purple-400 to-pink-500 flex items-center justify-center text-white text-xs font-bold">ML</div>
+                            <div>
+                                <p class="text-sm font-medium text-white">Maya Lin</p>
+                                <p class="text-xs text-slate-500">Founder, Pingbase</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 7. Pricing -->
+        <section id="pricing" class="py-24 scroll-mt-20">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="text-center mb-16">
+                    <h2 class="scroll-hidden text-3xl sm:text-4xl font-bold text-white">Simple, Transparent Pricing</h2>
+                    <p class="scroll-hidden mt-4 text-slate-400">Start free. Scale when you're ready.</p>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-8 stagger-children">
+                    <!-- Free -->
+                    <div class="scroll-hidden rounded-2xl border border-white/5 bg-surface/40 p-8">
+                        <h3 class="text-lg font-semibold text-white">Free</h3>
+                        <p class="mt-1 text-sm text-slate-400">For side projects</p>
+                        <p class="mt-6 text-4xl font-bold text-white">$0<span class="text-lg font-normal text-slate-400">/mo</span></p>
+                        <ul class="mt-6 space-y-3 text-sm text-slate-300">
+                            <li class="flex items-center gap-2"><svg class="w-4 h-4 text-brand flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>10 monitors</li>
+                            <li class="flex items-center gap-2"><svg class="w-4 h-4 text-brand flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>60-second intervals</li>
+                            <li class="flex items-center gap-2"><svg class="w-4 h-4 text-brand flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>Email alerts</li>
+                            <li class="flex items-center gap-2"><svg class="w-4 h-4 text-brand flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>24-hour history</li>
+                        </ul>
+                        <a href="register.html" class="mt-8 block text-center border border-white/10 hover:border-white/20 text-white px-6 py-3 rounded-xl font-medium transition-all hover:bg-white/5">Get Started</a>
+                    </div>
+
+                    <!-- Pro -->
+                    <div class="scroll-hidden rounded-2xl border border-brand/30 bg-brand/5 p-8 relative">
+                        <span class="absolute -top-3 left-1/2 -translate-x-1/2 bg-brand text-white text-xs font-bold px-3 py-1 rounded-full">Most Popular</span>
+                        <h3 class="text-lg font-semibold text-white">Pro</h3>
+                        <p class="mt-1 text-sm text-slate-400">For growing teams</p>
+                        <p class="mt-6 text-4xl font-bold text-white">$9<span class="text-lg font-normal text-slate-400">/mo</span></p>
+                        <ul class="mt-6 space-y-3 text-sm text-slate-300">
+                            <li class="flex items-center gap-2"><svg class="w-4 h-4 text-brand flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>100 monitors</li>
+                            <li class="flex items-center gap-2"><svg class="w-4 h-4 text-brand flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>30-second intervals</li>
+                            <li class="flex items-center gap-2"><svg class="w-4 h-4 text-brand flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>Email + Slack alerts</li>
+                            <li class="flex items-center gap-2"><svg class="w-4 h-4 text-brand flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>90-day history</li>
+                            <li class="flex items-center gap-2"><svg class="w-4 h-4 text-brand flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>Status page</li>
+                        </ul>
+                        <a href="register.html" class="mt-8 block text-center bg-brand hover:bg-emerald-500 text-white px-6 py-3 rounded-xl font-medium transition-all shadow-lg shadow-brand/20 hover:scale-[1.02]">Start Pro Trial</a>
+                    </div>
+
+                    <!-- Enterprise -->
+                    <div class="scroll-hidden rounded-2xl border border-white/5 bg-surface/40 p-8">
+                        <h3 class="text-lg font-semibold text-white">Enterprise</h3>
+                        <p class="mt-1 text-sm text-slate-400">For large-scale ops</p>
+                        <p class="mt-6 text-4xl font-bold text-white">Custom</p>
+                        <ul class="mt-6 space-y-3 text-sm text-slate-300">
+                            <li class="flex items-center gap-2"><svg class="w-4 h-4 text-brand flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>Unlimited monitors</li>
+                            <li class="flex items-center gap-2"><svg class="w-4 h-4 text-brand flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>10-second intervals</li>
+                            <li class="flex items-center gap-2"><svg class="w-4 h-4 text-brand flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>Multi-channel alerts</li>
+                            <li class="flex items-center gap-2"><svg class="w-4 h-4 text-brand flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>Unlimited history</li>
+                            <li class="flex items-center gap-2"><svg class="w-4 h-4 text-brand flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>SLA guarantee</li>
+                        </ul>
+                        <a href="mailto:support@uptimemonitor.dev" class="mt-8 block text-center border border-white/10 hover:border-white/20 text-white px-6 py-3 rounded-xl font-medium transition-all hover:bg-white/5">Contact Sales</a>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 8. FAQ -->
+        <section id="faq" class="py-24 bg-surface/20 border-y border-white/5 scroll-mt-20">
+            <div class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="text-center mb-16">
+                    <h2 class="scroll-hidden text-3xl sm:text-4xl font-bold text-white">Frequently Asked Questions</h2>
+                    <p class="scroll-hidden mt-4 text-slate-400">Everything you need to know.</p>
+                </div>
+
+                <div class="space-y-4 stagger-children">
+                    <div class="scroll-hidden faq-item rounded-xl border border-white/5 bg-surface/40 overflow-hidden">
+                        <button class="w-full flex items-center justify-between px-6 py-4 text-left" onclick="toggleFaq(this)" aria-expanded="false">
+                            <span class="text-sm font-medium text-white pr-4">How quickly can I get started?</span>
+                            <svg class="faq-chevron w-5 h-5 text-slate-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                        </button>
+                        <div class="faq-answer px-6 pb-4">
+                            <p class="text-sm text-slate-400">Under 60 seconds. Create an account, paste your URL, and we start monitoring immediately. No configuration files or agents required.</p>
+                        </div>
+                    </div>
+
+                    <div class="scroll-hidden faq-item rounded-xl border border-white/5 bg-surface/40 overflow-hidden">
+                        <button class="w-full flex items-center justify-between px-6 py-4 text-left" onclick="toggleFaq(this)" aria-expanded="false">
+                            <span class="text-sm font-medium text-white pr-4">What happens when my endpoint goes down?</span>
+                            <svg class="faq-chevron w-5 h-5 text-slate-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                        </button>
+                        <div class="faq-answer px-6 pb-4">
+                            <p class="text-sm text-slate-400">We detect the failure within your configured interval (as fast as 30 seconds) and send you an email alert immediately. The incident is logged and tracked until recovery.</p>
+                        </div>
+                    </div>
+
+                    <div class="scroll-hidden faq-item rounded-xl border border-white/5 bg-surface/40 overflow-hidden">
+                        <button class="w-full flex items-center justify-between px-6 py-4 text-left" onclick="toggleFaq(this)" aria-expanded="false">
+                            <span class="text-sm font-medium text-white pr-4">Can I monitor internal/private APIs?</span>
+                            <svg class="faq-chevron w-5 h-5 text-slate-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                        </button>
+                        <div class="faq-answer px-6 pb-4">
+                            <p class="text-sm text-slate-400">Yes. If your internal API is accessible from the public internet (via VPN tunnel, ngrok, or similar), you can monitor it just like any public endpoint.</p>
+                        </div>
+                    </div>
+
+                    <div class="scroll-hidden faq-item rounded-xl border border-white/5 bg-surface/40 overflow-hidden">
+                        <button class="w-full flex items-center justify-between px-6 py-4 text-left" onclick="toggleFaq(this)" aria-expanded="false">
+                            <span class="text-sm font-medium text-white pr-4">Is there a free tier?</span>
+                            <svg class="faq-chevron w-5 h-5 text-slate-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                        </button>
+                        <div class="faq-answer px-6 pb-4">
+                            <p class="text-sm text-slate-400">Absolutely. The Free plan includes 10 monitors, 60-second intervals, email alerts, and 24-hour history. No credit card required.</p>
+                        </div>
+                    </div>
+
+                    <div class="scroll-hidden faq-item rounded-xl border border-white/5 bg-surface/40 overflow-hidden">
+                        <button class="w-full flex items-center justify-between px-6 py-4 text-left" onclick="toggleFaq(this)" aria-expanded="false">
+                            <span class="text-sm font-medium text-white pr-4">Do you support status pages?</span>
+                            <svg class="faq-chevron w-5 h-5 text-slate-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                        </button>
+                        <div class="faq-answer px-6 pb-4">
+                            <p class="text-sm text-slate-400">Pro and Enterprise plans include a customizable public status page that shows real-time uptime for all your monitors.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 9. CTA -->
+        <section class="py-24">
+            <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+                <div class="scroll-hidden rounded-3xl border border-brand/20 bg-gradient-to-br from-brand/10 via-background to-sky-500/10 p-12 sm:p-16">
+                    <h2 class="text-3xl sm:text-4xl font-bold text-white" style="text-wrap: balance;">Start Monitoring in 60 Seconds</h2>
+                    <p class="mt-4 text-slate-400 max-w-lg mx-auto">No credit card required. Free tier included. Set up your first monitor before your coffee gets cold.</p>
+                    <div class="mt-8 flex flex-col sm:flex-row items-center justify-center gap-4">
+                        <a href="register.html" class="bg-brand hover:bg-emerald-500 text-white px-8 py-3.5 rounded-xl font-semibold text-base transition-all shadow-xl shadow-brand/25 hover:scale-[1.03] flex items-center gap-2">
+                            Create Free Account
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6"></path></svg>
+                        </a>
+                        <a href="login.html" class="border border-white/10 hover:border-white/20 text-slate-300 hover:text-white px-8 py-3.5 rounded-xl font-semibold text-base transition-all hover:bg-white/5">
+                            Sign In
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </section>
 
     </main>
 
-    <!-- Modal overlay -->
-    <div id="modal"
-        class="fixed inset-0 bg-background/80 backdrop-blur-sm z-[100] hidden items-center justify-center opacity-0 transition-opacity duration-300">
-        <div class="bg-surface rounded-2xl w-full max-w-lg mx-4 border border-white/10 shadow-2xl transform scale-95 transition-transform duration-300"
-            id="modalContent">
-
-            <div class="px-6 py-4 border-b border-white/10 flex justify-between items-center">
-                <h3 id="monitorModalTitle" class="text-lg font-semibold text-white">Add Monitor</h3>
-                <button onclick="closeModal()" class="text-slate-400 hover:text-white transition">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12">
-                        </path>
-                    </svg>
-                </button>
-            </div>
-
-            <form id="monitorForm" class="p-6 space-y-5">
-                <div>
-                    <label class="block text-sm font-medium text-slate-300 mb-1">Monitor Name</label>
-                    <input type="text" id="monitorName" required
-                        class="w-full bg-background border border-slate-700/50 rounded-lg px-4 py-2.5 text-white focus:outline-none focus:border-brand transition"
-                        placeholder="My API Health Check">
-                </div>
-
-                <div>
-                    <label class="block text-sm font-medium text-slate-300 mb-1">Target URL</label>
-                    <input type="url" id="monitorUrl" required
-                        class="w-full bg-background border border-slate-700/50 rounded-lg px-4 py-2.5 text-white focus:outline-none focus:border-brand transition"
-                        placeholder="https://api.example.com">
-                </div>
-
-                <div class="grid grid-cols-2 gap-4">
-                    <div>
-                        <label class="block text-sm font-medium text-slate-300 mb-1">Method</label>
-                        <select id="monitorMethod"
-                            class="w-full bg-background border border-slate-700/50 rounded-lg px-4 py-2.5 text-white focus:outline-none focus:border-brand appearance-none">
-                            <option>GET</option>
-                            <option>POST</option>
-                            <option>PUT</option>
-                            <option>DELETE</option>
-                        </select>
-                    </div>
-                    <div>
-                        <label class="block text-sm font-medium text-slate-300 mb-1">Interval (Secs)</label>
-                        <input type="number" id="monitorInterval" min="30" value="60" required
-                            class="w-full bg-background border border-slate-700/50 rounded-lg px-4 py-2.5 text-white focus:outline-none focus:border-brand transition">
-                    </div>
-                </div>
-
-                <div>
-                    <label class="block text-sm font-medium text-slate-300 mb-1">Timeout (Secs)</label>
-                    <input type="number" id="monitorTimeout" min="1" max="30" value="10" required
-                        class="w-full bg-background border border-slate-700/50 rounded-lg px-4 py-2.5 text-white focus:outline-none focus:border-brand transition">
-                </div>
-
-                <label
-                    class="flex items-center justify-between rounded-xl border border-white/10 bg-background/40 px-4 py-3">
-                    <div>
-                        <p class="text-sm font-medium text-white">Tracking Enabled</p>
-                        <p class="text-xs text-slate-400">Disable this to keep the monitor saved but paused</p>
-                    </div>
-                    <input type="checkbox" id="monitorActive" checked
-                        class="h-4 w-4 rounded border-slate-600 bg-background text-brand focus:ring-brand">
-                </label>
-
-                <div class="pt-4 flex justify-end gap-3">
-                    <button type="button" onclick="closeModal()"
-                        class="px-5 py-2.5 rounded-lg font-medium text-slate-300 hover:bg-white/5 transition">Cancel</button>
-                    <button id="monitorSubmitButton" type="submit"
-                        class="bg-brand hover:bg-emerald-500 text-white px-5 py-2.5 rounded-lg font-medium transition shadow-lg shadow-brand/20">Save
-                        Monitor</button>
-                </div>
-            </form>
-        </div>
-    </div>
-
-    <div id="detailsModal"
-        class="fixed inset-0 bg-background/80 backdrop-blur-sm z-[110] hidden items-center justify-center opacity-0 transition-opacity duration-200 px-4 py-6">
-        <div id="detailsModalContent"
-            class="w-full max-w-6xl max-h-full overflow-hidden rounded-3xl border border-white/10 bg-surface shadow-2xl transform scale-95 transition-transform duration-200 flex flex-col">
-            <div class="flex items-start justify-between gap-4 border-b border-white/10 px-6 py-5">
-                <div class="min-w-0">
-                    <p class="text-[10px] font-semibold uppercase tracking-[0.26em] text-slate-500">Monitor Insights</p>
-                    <h2 id="detailsTitle" class="mt-2 truncate text-2xl font-semibold text-white">Loading monitor
-                        details...</h2>
-                    <p id="detailsSubtitle" class="mt-1 text-sm text-slate-400">Fetching metrics and check history</p>
-                </div>
+    <!-- 10. Footer -->
+    <footer class="border-t border-white/5 py-12">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex flex-col md:flex-row items-center justify-between gap-6">
                 <div class="flex items-center gap-3">
-                    <button onclick="refreshSelectedMonitorDetails()"
-                        class="rounded-lg border border-white/10 bg-white/5 px-4 py-2 text-sm font-medium text-slate-200 transition hover:border-brand/40 hover:bg-brand/10">Refresh
-                        Data</button>
-                    <button onclick="closeDetailsModal()" class="text-slate-400 hover:text-white transition">
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M6 18L18 6M6 6l12 12"></path>
-                        </svg>
-                    </button>
+                    <div class="w-7 h-7 rounded-lg bg-gradient-to-br from-brand to-emerald-400 flex items-center justify-center">
+                        <svg class="w-3.5 h-3.5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
+                    </div>
+                    <span class="font-bold text-white">UptimeMonitor</span>
                 </div>
-            </div>
-
-            <div class="overflow-y-auto px-6 py-6 space-y-6">
-                <section id="detailsMeta"></section>
-
-                <section>
-                    <div class="mb-3 flex items-center justify-between gap-4">
-                        <div>
-                            <h3 class="text-lg font-semibold text-white">24 Hour Metrics</h3>
-                            <p class="text-sm text-slate-400">Latency percentiles and uptime derived from recent checks
-                            </p>
-                        </div>
-                    </div>
-                    <div id="detailsMetrics"></div>
-                </section>
-
-                <section>
-                    <div class="mb-3">
-                        <h3 class="text-lg font-semibold text-white">Recent Check History</h3>
-                        <p class="text-sm text-slate-400">Latest execution results returned by the backend history API
-                        </p>
-                    </div>
-                    <div id="detailsHistory"></div>
-                </section>
-
-                <section>
-                    <div class="mb-3">
-                        <h3 class="text-lg font-semibold text-white">Notes</h3>
-                        <p class="text-sm text-slate-400">Quick interpretation of the recent monitor data</p>
-                    </div>
-                    <div id="detailsNotes"></div>
-                </section>
+                <nav class="flex items-center gap-6 text-sm text-slate-400">
+                    <a href="#features" class="hover:text-white transition-colors">Features</a>
+                    <a href="#pricing" class="hover:text-white transition-colors">Pricing</a>
+                    <a href="#faq" class="hover:text-white transition-colors">FAQ</a>
+                    <a href="login.html" class="hover:text-white transition-colors">Sign In</a>
+                </nav>
+                <p class="text-xs text-slate-500">&copy; 2026 UptimeMonitor. All rights reserved.</p>
             </div>
         </div>
-    </div>
+    </footer>
 
-    <div id="deleteConfirmModal"
-        class="fixed inset-0 bg-background/80 backdrop-blur-sm z-[120] hidden items-center justify-center opacity-0 transition-opacity duration-200 px-4">
-        <div id="deleteConfirmContent"
-            class="w-full max-w-md rounded-2xl border border-white/10 bg-surface p-6 shadow-2xl transform scale-95 transition-transform duration-200">
-            <div class="flex items-start gap-3">
-                <div class="mt-0.5 rounded-lg bg-red-500/10 p-2 text-red-400">
-                    <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                            d="M12 9v2m0 4h.01m-7.938 4h15.876c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L2.34 16c-.77 1.333.192 3 1.732 3z">
-                        </path>
-                    </svg>
-                </div>
-                <div>
-                    <h3 class="text-lg font-semibold text-white">Delete Monitor</h3>
-                    <p class="mt-1 text-sm text-slate-300">This action cannot be undone.</p>
-                </div>
-            </div>
-
-            <p id="deleteMonitorSummary"
-                class="mt-4 rounded-xl border border-white/10 bg-background/40 px-4 py-3 text-sm text-slate-200"></p>
-
-            <div class="mt-6 flex justify-end gap-3">
-                <button type="button" onclick="closeDeleteConfirmModal()"
-                    class="rounded-lg px-4 py-2 text-sm font-medium text-slate-300 transition hover:bg-white/5">Cancel</button>
-                <button type="button" onclick="confirmDeleteMonitor()"
-                    class="rounded-lg bg-red-500 px-4 py-2 text-sm font-medium text-white transition hover:bg-red-400">Delete</button>
-            </div>
-        </div>
-    </div>
-
-    <script src="app.js?v=2"></script>
-    <script>
-        if (!localStorage.getItem('uptime_jwt')) {
-            window.location.href = 'login.html'
-        } else {
-            document.body.style.display = ''
-            loadDashboard()
-            setInterval(() => {
-                loadDashboard()
-            }, 10000)
-        }
-    </script>
+    <script src="landing.js?v=1"></script>
 </body>
 
 </html>

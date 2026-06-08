@@ -71,7 +71,14 @@ function formatDateTime(value) {
         return 'Not available'
     }
 
-    return date.toLocaleString()
+    try {
+        return new Intl.DateTimeFormat(undefined, {
+            dateStyle: 'medium',
+            timeStyle: 'short'
+        }).format(date)
+    } catch {
+        return date.toLocaleString()
+    }
 }
 
 function formatLatency(value) {
@@ -280,7 +287,10 @@ if (loginForm) {
 
             const data = await res.json()
             localStorage.setItem('uptime_jwt', data.token)
-            window.location.href = 'index.html'
+            if (data.refreshToken) {
+                sessionStorage.setItem('uptime_refresh_token', data.refreshToken)
+            }
+            window.location.href = 'dashboard.html'
         } catch (error) {
             errorBox.innerText = error.message || 'Server error occurred'
             errorBox.classList.remove('hidden')
@@ -318,7 +328,10 @@ if (registerForm) {
 
             const data = await res.json()
             localStorage.setItem('uptime_jwt', data.token)
-            window.location.href = 'index.html'
+            if (data.refreshToken) {
+                sessionStorage.setItem('uptime_refresh_token', data.refreshToken)
+            }
+            window.location.href = 'dashboard.html'
         } catch (error) {
             errorBox.innerText = error.message || 'Server error occurred'
             errorBox.classList.remove('hidden')
@@ -330,7 +343,26 @@ if (registerForm) {
 }
 
 function logout() {
+    const refreshToken = sessionStorage.getItem('uptime_refresh_token')
+    const token = localStorage.getItem('uptime_jwt')
+
+    if (refreshToken) {
+        // Attempt to revoke refresh token on the server (fire-and-forget)
+        fetch(`${API_URL}/auth/logout`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+            },
+            body: JSON.stringify({ refreshToken }),
+            credentials: 'include'
+        }).catch(() => {
+            // Ignore network errors during logout
+        })
+    }
+
     localStorage.removeItem('uptime_jwt')
+    sessionStorage.removeItem('uptime_refresh_token')
     window.location.href = 'login.html'
 }
 
@@ -350,7 +382,8 @@ async function fetchWithAuth(url, options = {}) {
         headers['Content-Type'] = 'application/json'
     }
 
-    const res = await fetch(url, { ...options, headers })
+    // Include credentials for httpOnly cookie-based auth
+    const res = await fetch(url, { ...options, headers, credentials: 'include' })
     if (res.status === 401 || res.status === 403) {
         logout()
         throw new Error('Session expired')
@@ -752,7 +785,7 @@ function renderDetailsSkeleton() {
         return
     }
 
-    titleNode.textContent = 'Loading monitor details...'
+    titleNode.textContent = 'Loading monitor details…'
     subtitleNode.textContent = 'Fetching metrics and check history'
     metaNode.innerHTML = '<div class="animate-pulse rounded-xl bg-white/5 p-4 h-24"></div>'
     metricsNode.innerHTML = '<div class="animate-pulse rounded-xl bg-white/5 p-4 h-28"></div>'

@@ -48,3 +48,11 @@ input:-webkit-autofill:active {
     -webkit-text-fill-color: white !important;
     transition: background-color 5000s ease-in-out 0s;
 }
+
+/* Respect reduced motion preferences */
+@media (prefers-reduced-motion: reduce) {
+    .fade-in-up {
+        animation: none;
+        opacity: 1;
+    }
+}
