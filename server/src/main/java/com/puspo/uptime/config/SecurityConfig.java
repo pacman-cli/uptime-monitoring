@@ -34,7 +34,10 @@ public class SecurityConfig {
   public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
     http
         .cors(Customizer.withDefaults())
-        .csrf(AbstractHttpConfigurer::disable)
+        .csrf(AbstractHttpConfigurer::disable) // CSRF disabled because we use JWT tokens (stateless auth).
+        // JWT tokens are signed and verified server-side, making them immune to CSRF attacks
+        // since the token must be explicitly sent via Authorization header (not auto-attached like cookies).
+        // See: https://stackoverflow.com/questions/72362189/is-csrf-protection-necessary-for-rest-api-with-jwt
         .authorizeHttpRequests(auth -> auth
             .requestMatchers(
                 "/api/v1/auth/**",

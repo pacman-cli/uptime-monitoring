@@ -23,7 +23,7 @@ public class EmailNotificationService {
     @Value("${uptime.alert.email.enabled:false}")
     private boolean emailEnabled;
 
-    @Value("${uptime.alert.email.from:noreply@uptime.local")
+    @Value("${uptime.alert.email.from:noreply@uptime.local}")
     private String fromEmail;
 
     // this should be an async method

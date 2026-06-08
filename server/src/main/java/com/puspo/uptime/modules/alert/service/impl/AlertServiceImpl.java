@@ -38,6 +38,9 @@ public class AlertServiceImpl implements AlertService {
     @CacheEvict(value = {"alerts", "incidents"}, key = "#monitor.user.id")
     public void evaluateMonitorRules(Monitor monitor) {
         log.info("Evaluating alert rules for Monitor ID {} -> {}", monitor.getId(), monitor.getUrl());
+        // Note: @CacheEvict with "#monitor.user.id" requires user to be loaded.
+        // This relies on the caller (HttpCheckWorker.saveLogs) ensuring user is accessible,
+        // which is now guaranteed by JOIN FETCH in MonitorRepository.findByActiveTrue().
         List<MonitorLog> monitorLogList = monitorLogRepository.findTop3ByMonitorIdOrderByCreatedAtDesc(monitor.getId());
         Optional<Incident> openIncident = incidentRepository
                 .findTopByMonitorIdAndResolvedAtIsNullOrderByOpenedAtDesc(monitor.getId());

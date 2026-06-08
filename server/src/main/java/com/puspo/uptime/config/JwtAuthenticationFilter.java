@@ -36,16 +36,14 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             HttpServletResponse response,
             FilterChain filterChain) throws ServletException, IOException {
 
-        final String authHeader = request.getHeader("Authorization");
-        final String jwt;
+        final String jwt = extractJwt(request);
         final String userEmail;
 
-        if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+        if (jwt == null) {
             filterChain.doFilter(request, response);
             return;
         }
 
-        jwt = authHeader.substring(7);
         try {
             userEmail = jwtUtil.extractUsername(jwt);
 
@@ -62,9 +60,23 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 }
             }
         } catch (JwtException | IllegalArgumentException e) {
-            // Token is invalid
+            // Token is invalid — proceed without auth
         }
 
         filterChain.doFilter(request, response);
+    }
+
+    /**
+     * Extract JWT from Authorization header first, then fall back to httpOnly cookie.
+     */
+    private String extractJwt(HttpServletRequest request) {
+        // Check Authorization header first
+        final String authHeader = request.getHeader("Authorization");
+        if (authHeader != null && authHeader.startsWith("Bearer ")) {
+            return authHeader.substring(7);
+        }
+
+        // Fall back to httpOnly cookie
+        return jwtUtil.extractTokenFromCookies(request.getCookies());
     }
 }

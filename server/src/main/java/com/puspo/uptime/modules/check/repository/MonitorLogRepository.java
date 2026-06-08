@@ -44,4 +44,16 @@ public interface MonitorLogRepository extends JpaRepository<MonitorLog, Long> {
     );
 
     Optional<MonitorLog> findTopByMonitorIdOrderByCreatedAtDesc(Long monitorId);
+
+    // Batch fetch the latest MonitorLog for each monitor ID — eliminates N+1 for last-check
+    @Query(
+        value = """
+        SELECT DISTINCT ON (ml.monitor_id) ml.*
+        FROM monitor_logs ml
+        WHERE ml.monitor_id IN (:monitorIds)
+        ORDER BY ml.monitor_id, ml.created_at DESC
+        """,
+        nativeQuery = true
+    )
+    List<MonitorLog> findLatestPerMonitorId(@Param("monitorIds") List<Long> monitorIds);
 }

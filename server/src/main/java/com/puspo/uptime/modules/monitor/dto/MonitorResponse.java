@@ -2,6 +2,7 @@ package com.puspo.uptime.modules.monitor.dto;
 
 import java.time.LocalDateTime;
 
+import com.puspo.uptime.modules.check.dto.MonitorLogResponse;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -13,6 +14,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 public class MonitorResponse {
     private Long id;
+    private String name;
     private String url;
     private String method;
     private Integer intervalSeconds;
@@ -24,4 +26,7 @@ public class MonitorResponse {
     private String expectedBodyContains;
     private Boolean checkSslExpiration;
     private Integer sslExpiryDaysThreshold;
+
+    // Populated by MonitorService.getAllMonitors() to eliminate N+1 queries from the frontend
+    private MonitorLogResponse lastCheck;
 }

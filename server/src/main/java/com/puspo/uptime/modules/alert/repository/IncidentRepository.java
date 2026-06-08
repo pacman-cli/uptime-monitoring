@@ -19,7 +19,7 @@ public interface IncidentRepository extends JpaRepository<Incident, Long> {
         """
         SELECT i
         FROM Incident i
-        JOIN i.monitor m
+        JOIN FETCH i.monitor m
         WHERE m.user.id = :userId
         ORDER BY COALESCE(i.resolvedAt, i.openedAt) DESC, i.openedAt DESC
         """

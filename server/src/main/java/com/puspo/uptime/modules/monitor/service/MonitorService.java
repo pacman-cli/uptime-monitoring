@@ -1,6 +1,8 @@
 package com.puspo.uptime.modules.monitor.service;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -76,10 +78,41 @@ public class MonitorService {
         return mapToResponse(saved);
     }
 
+    @Transactional(readOnly = true)
     public List<MonitorResponse> getAllMonitors(User user) {
-        return monitorRepository.findAllByUserId(user.getId())
-                .stream()
-                .map(this::mapToResponse)
+        List<Monitor> monitors = monitorRepository.findAllByUserId(user.getId());
+
+        if (monitors.isEmpty()) {
+            return List.of();
+        }
+
+        // Batch-fetch last check for all monitors (eliminates N+1 queries from the frontend)
+        List<Long> monitorIds = monitors.stream()
+                .map(Monitor::getId)
+                .collect(Collectors.toList());
+
+        List<MonitorLog> latestLogs = monitorLogRepository.findLatestPerMonitorId(monitorIds);
+        Map<Long, MonitorLog> logByMonitorId = latestLogs.stream()
+                .collect(Collectors.toMap(
+                        log -> log.getMonitor().getId(),
+                        log -> log,
+                        (a, b) -> a
+                ));
+
+        return monitors.stream()
+                .map(monitor -> {
+                    MonitorResponse response = mapToResponse(monitor);
+                    MonitorLog latestLog = logByMonitorId.get(monitor.getId());
+                    if (latestLog != null) {
+                        response.setLastCheck(MonitorLogResponse.builder()
+                                .status(latestLog.getStatus())
+                                .statusCode(latestLog.getStatusCode())
+                                .responseTimeMs(latestLog.getResponseTime())
+                                .checkedAt(latestLog.getCreatedAt())
+                                .build());
+                    }
+                    return response;
+                })
                 .collect(Collectors.toList());
     }
 
@@ -203,6 +236,7 @@ public class MonitorService {
     private MonitorResponse mapToResponse(Monitor monitor) {
         return MonitorResponse.builder()
                 .id(monitor.getId())
+                .name(monitor.getName())
                 .url(monitor.getUrl())
                 .method(monitor.getMethod())
                 .intervalSeconds(monitor.getIntervalSeconds())
@@ -217,16 +251,20 @@ public class MonitorService {
                 .build();
     }
 
-    // helper function
+    // helper function - sorts input before computing percentile
     private long calculatePercentile(List<Long> latencies, int percentile) {
         if (latencies == null || latencies.isEmpty()) {
             return 0;
         }
 
-        int index = (int) Math.ceil((percentile / 100.0) * latencies.size()) - 1;
-        index = Math.max(0, Math.min(index, latencies.size() - 1));
+        // Sort ascending to ensure correct percentile calculation
+        List<Long> sorted = new ArrayList<>(latencies);
+        Collections.sort(sorted);
 
-        return latencies.get(index);
+        int index = (int) Math.ceil((percentile / 100.0) * sorted.size()) - 1;
+        index = Math.max(0, Math.min(index, sorted.size() - 1));
+
+        return sorted.get(index);
     }
 
     public List<MonitorLogResponse> getMonitorHistory(Long monitorId, User user, int hoursBack) {

@@ -1,11 +1,14 @@
 package com.puspo.uptime.config;
 
 import java.security.Key;
+import java.time.Duration;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.function.Function;
 
+import jakarta.servlet.http.Cookie;
+import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Component;
@@ -19,13 +22,17 @@ import io.jsonwebtoken.security.Keys;
 @Component
 public class JwtUtil {
 
-  // You should put this in application.yml in a real app, hardcoded here for
-  // testing
   @Value("${app.jwt.secret:404E635266556A586E3272357538782F413F4428472B4B6250645367566B5970}")
   private String secretKey;
 
-  @Value("${app.jwt.expiration:86400000}")
+  @Value("${app.jwt.expiration:900000}") // 15 minutes
   private long jwtExpiration;
+
+  @Value("${app.jwt.cookie-name:uptime_token}")
+  private String cookieName;
+
+  @Value("${app.cors.allowed.origins:*}")
+  private String allowedOrigins;
 
   public String extractUsername(String token) {
     return extractClaim(token, Claims::getSubject);
@@ -80,5 +87,43 @@ public class JwtUtil {
   private Key getSignInKey() {
     byte[] keyBytes = Decoders.BASE64.decode(secretKey);
     return Keys.hmacShaKeyFor(keyBytes);
+  }
+
+  /**
+   * Extract JWT from request cookies.
+   */
+  public String extractTokenFromCookies(Cookie[] cookies) {
+    if (cookies == null) return null;
+    for (Cookie cookie : cookies) {
+      if (cookieName.equals(cookie.getName())) {
+        return cookie.getValue();
+      }
+    }
+    return null;
+  }
+
+  /**
+   * Set JWT as an httpOnly cookie on the response.
+   * Uses SameSite=Lax for CSRF protection.
+   */
+  public void setTokenCookie(HttpServletResponse response, String token) {
+    Cookie cookie = new Cookie(cookieName, token);
+    cookie.setHttpOnly(true);
+    cookie.setSecure(!"*".equals(allowedOrigins) && !allowedOrigins.contains("localhost"));
+    cookie.setPath("/");
+    cookie.setMaxAge((int) Duration.ofMillis(jwtExpiration).toSeconds());
+    cookie.setAttribute("SameSite", "Lax");
+    response.addCookie(cookie);
+  }
+
+  /**
+   * Clear the auth cookie (for logout).
+   */
+  public void clearTokenCookie(HttpServletResponse response) {
+    Cookie cookie = new Cookie(cookieName, "");
+    cookie.setHttpOnly(true);
+    cookie.setPath("/");
+    cookie.setMaxAge(0);
+    response.addCookie(cookie);
   }
 }

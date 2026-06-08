@@ -25,15 +25,14 @@ public class RateLimitFilter extends OncePerRequestFilter {
             .build();
 
     @Override
+    protected boolean shouldNotFilter(HttpServletRequest request) {
+        String path = request.getRequestURI();
+        return !path.startsWith("/api/v1/auth/");
+    }
+
+    @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
             throws ServletException, IOException {
-
-        String path = request.getRequestURI();
-
-        if (!path.startsWith("/api/v1/auth/")) {
-            filterChain.doFilter(request, response);
-            return;
-        }
 
         String clientIp = getClientIp(request);
         Bucket bucket = buckets.get(clientIp, this::createBucket);

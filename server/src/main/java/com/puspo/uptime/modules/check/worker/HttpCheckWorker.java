@@ -13,6 +13,7 @@ import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.reactive.function.client.WebClient;
 
 import com.puspo.uptime.modules.alert.service.AlertService;
@@ -140,6 +141,7 @@ public class HttpCheckWorker {
         }
     }
 
+    @Transactional
     public void saveLogs(Monitor monitor, String status, Integer statusCode, Long latency) {
         MonitorLog previousLog =
                 monitorLogRepository.findTopByMonitorIdOrderByCreatedAtDesc(monitor.getId())

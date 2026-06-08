@@ -14,7 +14,7 @@ public interface AlertRepository extends JpaRepository<Alert, Long> {
         """
         SELECT a
         FROM Alert a
-        JOIN a.monitor m
+        JOIN FETCH a.monitor m
         WHERE m.user.id=:userId
         ORDER BY a.createdAt DESC
         """
