@@ -658,7 +658,8 @@ async function loadMonitors() {
             return
         }
 
-        const monitors = await res.json()
+        const body = await res.json()
+        const monitors = Array.isArray(body) ? body : (body.data || [])
         const enrichedMonitors = await Promise.all(monitors.map(async (monitor) => {
             try {
                 const checkRes = await fetchWithAuth(`${API_URL}/monitors/${monitor.id}/last-check`)
