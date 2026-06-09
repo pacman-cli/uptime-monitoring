@@ -41,6 +41,10 @@ async function readErrorMessage(res, fallbackMessage) {
                 return body.message
             }
 
+            if (body.error && body.error.message) {
+                return body.error.message
+            }
+
             if (body.errors) {
                 return Object.values(body.errors).join(', ')
             }
