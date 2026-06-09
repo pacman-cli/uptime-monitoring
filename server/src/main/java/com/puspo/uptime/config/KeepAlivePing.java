@@ -14,10 +14,10 @@ public class KeepAlivePing {
     private final WebClient webClient;
     private final String externalUrl;
 
-    public KeepAlivePing(WebClient.Builder builder,
+    public KeepAlivePing(WebClient webClient,
                          @Value("${uptime.keepalive.external-url:}") String externalUrl) {
         this.externalUrl = externalUrl;
-        this.webClient = builder.build();
+        this.webClient = webClient;
     }
 
     @Scheduled(fixedDelayString = "${uptime.keepalive.interval-ms:600000}")

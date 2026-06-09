@@ -122,8 +122,10 @@ public class JwtUtil {
   public void clearTokenCookie(HttpServletResponse response) {
     Cookie cookie = new Cookie(cookieName, "");
     cookie.setHttpOnly(true);
+    cookie.setSecure(!"*".equals(allowedOrigins) && !allowedOrigins.contains("localhost"));
     cookie.setPath("/");
     cookie.setMaxAge(0);
+    cookie.setAttribute("SameSite", "Lax");
     response.addCookie(cookie);
   }
 }

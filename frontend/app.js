@@ -387,10 +387,40 @@ async function fetchWithAuth(url, options = {}) {
     }
 
     // Include credentials for httpOnly cookie-based auth
-    const res = await fetch(url, { ...options, headers, credentials: 'include' })
+    let res = await fetch(url, { ...options, headers, credentials: 'include' })
+
+    // Attempt token refresh on 401 before logging out
     if (res.status === 401 || res.status === 403) {
-        logout()
-        throw new Error('Session expired')
+        const refreshToken = sessionStorage.getItem('uptime_refresh_token')
+        if (refreshToken) {
+            try {
+                const refreshRes = await fetch(`${API_URL}/auth/refresh`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ refreshToken })
+                })
+
+                if (refreshRes.ok) {
+                    const data = await refreshRes.json()
+                    localStorage.setItem('uptime_jwt', data.token)
+                    if (data.refreshToken) {
+                        sessionStorage.setItem('uptime_refresh_token', data.refreshToken)
+                    }
+                    // Retry the original request with new token
+                    headers['Authorization'] = `Bearer ${data.token}`
+                    res = await fetch(url, { ...options, headers, credentials: 'include' })
+                } else {
+                    logout()
+                    throw new Error('Session expired')
+                }
+            } catch {
+                logout()
+                throw new Error('Session expired')
+            }
+        } else {
+            logout()
+            throw new Error('Session expired')
+        }
     }
 
     return res

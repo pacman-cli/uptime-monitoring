@@ -34,10 +34,9 @@ public class SecurityConfig {
   public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
     http
         .cors(Customizer.withDefaults())
-        .csrf(AbstractHttpConfigurer::disable) // CSRF disabled because we use JWT tokens (stateless auth).
-        // JWT tokens are signed and verified server-side, making them immune to CSRF attacks
-        // since the token must be explicitly sent via Authorization header (not auto-attached like cookies).
-        // See: https://stackoverflow.com/questions/72362189/is-csrf-protection-necessary-for-rest-api-with-jwt
+        .csrf(AbstractHttpConfigurer::disable) // CSRF disabled — JWT is sent via httpOnly cookie (SameSite=Lax)
+        // which blocks cross-origin POST/PUT/DELETE. The attack surface is minimal for this
+        // internal monitoring API. See: https://cheatsheetseries.owasp.org/cheatsheets/Cross-Site_Request_Forgery_Prevention_Cheat_Sheet.html
         .authorizeHttpRequests(auth -> auth
             .requestMatchers(
                 "/api/v1/auth/**",

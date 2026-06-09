@@ -30,7 +30,6 @@ public class OutboxProcessor {
     private final ConcurrentHashMap<Long, Long> lastAttemptTimes = new ConcurrentHashMap<>();
 
     @Scheduled(fixedDelayString = "${uptime.outbox.poll-interval-ms:10000}")
-    @Transactional
     public void processOutboxEvents() {
         var unprocessedEvents = outboxEventRepository.findUnprocessedEvents();
 
@@ -60,7 +59,7 @@ public class OutboxProcessor {
 
             try {
                 processEvent(event);
-                outboxEventRepository.markAsProcessed(event.getId());
+                markProcessed(event.getId());
                 cleanup(event.getId());
                 log.info("Successfully processed outbox event {}", event.getId());
             } catch (Exception e) {
@@ -69,11 +68,16 @@ public class OutboxProcessor {
                 // Give up after 5 attempts to avoid infinite retries
                 if (attempt >= 5) {
                     log.warn("OUTBOX_DLQ: Event {} failed {} times. Marking as processed.", event.getId(), attempt);
-                    outboxEventRepository.markAsProcessed(event.getId());
+                    markProcessed(event.getId());
                     cleanup(event.getId());
                 }
             }
         }
+    }
+
+    @Transactional
+    protected void markProcessed(Long eventId) {
+        outboxEventRepository.markAsProcessed(eventId);
     }
 
     private void cleanup(Long eventId) {
