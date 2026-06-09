@@ -53,6 +53,7 @@ public class MonitorService {
 
         Monitor monitor = Monitor.builder()
                 .user(user)
+                .name(request.getName())
                 .url(request.getUrl())
                 .method(request.getMethod())
                 .intervalSeconds(request.getIntervalSeconds())
