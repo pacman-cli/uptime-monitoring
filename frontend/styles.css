@@ -56,3 +56,212 @@ input:-webkit-autofill:active {
         opacity: 1;
     }
 }
+
+/* Native dialog styling and top-layer transition setup */
+dialog {
+    background: transparent;
+    border: none;
+    padding: 0;
+    margin: auto;
+    outline: none;
+    position: fixed;
+    inset: 0;
+    display: none;
+}
+
+dialog[open] {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* Open/close animations for dialog using starting-style */
+dialog {
+    opacity: 0;
+    transform: scale(0.95);
+    transition-property: opacity, transform, display, overlay;
+    transition-duration: 0.25s;
+    transition-timing-function: cubic-bezier(0.16, 1, 0.3, 1);
+    transition-behavior: allow-discrete;
+}
+
+dialog[open] {
+    opacity: 1;
+    transform: scale(1);
+}
+
+@starting-style {
+    dialog[open] {
+        opacity: 0;
+        transform: scale(0.95);
+    }
+}
+
+dialog::backdrop {
+    background-color: rgba(15, 23, 42, 0);
+    backdrop-filter: blur(0px);
+    transition:
+        display 0.25s allow-discrete,
+        overlay 0.25s allow-discrete,
+        background-color 0.25s ease-out,
+        backdrop-filter 0.25s ease-out;
+}
+
+dialog[open]::backdrop {
+    background-color: rgba(15, 23, 42, 0.8);
+    backdrop-filter: blur(4px);
+}
+
+@starting-style {
+    dialog[open]::backdrop {
+        background-color: rgba(15, 23, 42, 0);
+        backdrop-filter: blur(0px);
+    }
+}
+
+/* Reduced motion support for dialog */
+@media (prefers-reduced-motion: reduce) {
+    dialog {
+        transform: none !important;
+        transition-duration: 0.1s !important;
+    }
+    dialog::backdrop {
+        backdrop-filter: none !important;
+        transition-duration: 0.1s !important;
+    }
+    @starting-style {
+        dialog[open] {
+            transform: none !important;
+        }
+        dialog[open]::backdrop {
+            backdrop-filter: none !important;
+        }
+    }
+}
+
+/* Modern native validation styling */
+input:user-invalid,
+select:user-invalid {
+    border-color: #ef4444 !important; /* red-500 */
+    background-color: rgba(239, 68, 68, 0.04) !important;
+}
+
+input:user-valid,
+select:user-valid {
+    border-color: #10b981 !important; /* brand/emerald-500 */
+}
+
+/* Keep styling clean during focus */
+input:user-invalid:focus,
+select:user-invalid:focus {
+    box-shadow: 0 0 0 2px rgba(239, 68, 68, 0.4) !important;
+}
+
+input:user-valid:focus,
+select:user-valid:focus {
+    box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.4) !important;
+}
+
+/* Spring animation variables replaced with smooth cubic-bezier curve */
+:root {
+    --spring-easing: cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.spring-hover {
+    transition: transform 0.5s var(--spring-easing), border-color 0.5s var(--spring-easing), box-shadow 0.5s var(--spring-easing), background-color 0.5s var(--spring-easing);
+}
+
+.spring-hover:hover {
+    transform: scale(1.02) translateY(-6px);
+}
+
+/* Infinite scroll marquee animations */
+@keyframes marquee-scroll-vertical {
+    0% {
+        transform: translate3d(0, 0, 0);
+    }
+    100% {
+        transform: translate3d(0, -50%, 0);
+    }
+}
+@keyframes marquee-scroll-horizontal {
+    0% {
+        transform: translate3d(0, 0, 0);
+    }
+    100% {
+        transform: translate3d(-50%, 0, 0);
+    }
+}
+
+/* Vertical Marquee layout */
+.marquee-container.vertical {
+    mask-image: linear-gradient(to bottom, transparent, black 15%, black 85%, transparent);
+    -webkit-mask-image: linear-gradient(to bottom, transparent, black 15%, black 85%, transparent);
+    overflow: hidden;
+    height: 480px;
+    width: 100%;
+    position: relative;
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+}
+.marquee-container.vertical .marquee-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    height: max-content;
+    animation: marquee-scroll-vertical 25s linear infinite;
+}
+.marquee-container.vertical .marquee-content > div {
+    margin-bottom: 1.5rem;
+    margin-right: 0;
+}
+
+/* Horizontal Marquee layout */
+.marquee-container.horizontal {
+    mask-image: linear-gradient(to right, transparent, black 15%, black 85%, transparent);
+    -webkit-mask-image: linear-gradient(to right, transparent, black 15%, black 85%, transparent);
+    overflow: hidden;
+    width: 100%;
+    position: relative;
+    display: flex;
+    justify-content: flex-start;
+    align-items: center;
+}
+.marquee-container.horizontal .marquee-content {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    width: max-content;
+    animation: marquee-scroll-horizontal 25s linear infinite;
+}
+.marquee-container.horizontal .marquee-content > div {
+    margin-right: 1.5rem;
+    margin-bottom: 0;
+}
+
+.marquee-content:hover {
+    animation-play-state: paused;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .marquee-container.vertical, .marquee-container.horizontal {
+        height: auto;
+        mask-image: none;
+        -webkit-mask-image: none;
+        overflow: visible;
+    }
+    .marquee-container.vertical .marquee-content, .marquee-container.horizontal .marquee-content {
+        animation: none;
+        width: 100%;
+        max-width: 100%;
+        flex-direction: row;
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: 1.5rem;
+    }
+    .marquee-container.vertical .marquee-content > div, .marquee-container.horizontal .marquee-content > div {
+        margin-bottom: 0;
+        margin-right: 0;
+    }
+}

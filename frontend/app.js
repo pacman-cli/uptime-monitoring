@@ -163,33 +163,46 @@ function setVisibility(element, shouldShow, displayClass = 'flex') {
 }
 
 function openScaleModal(container, content) {
-    if (!container || !content) {
+    if (!container) {
         return
     }
 
-    setVisibility(container, true)
-    requestAnimationFrame(() => {
-        container.classList.remove('opacity-0')
-        content.classList.remove('scale-95')
-        content.classList.add('scale-100')
-    })
+    if (container.tagName === 'DIALOG') {
+        container.showModal()
+    } else {
+        if (!content) return
+        setVisibility(container, true)
+        requestAnimationFrame(() => {
+            container.classList.remove('opacity-0')
+            content.classList.remove('scale-95')
+            content.classList.add('scale-100')
+        })
+    }
 }
 
 function closeScaleModal(container, content, onClosed) {
-    if (!container || !content) {
+    if (!container) {
         return
     }
 
-    container.classList.add('opacity-0')
-    content.classList.remove('scale-100')
-    content.classList.add('scale-95')
-
-    setTimeout(() => {
-        setVisibility(container, false)
+    if (container.tagName === 'DIALOG') {
+        container.close()
         if (typeof onClosed === 'function') {
             onClosed()
         }
-    }, 220)
+    } else {
+        if (!content) return
+        container.classList.add('opacity-0')
+        content.classList.remove('scale-100')
+        content.classList.add('scale-95')
+
+        setTimeout(() => {
+            setVisibility(container, false)
+            if (typeof onClosed === 'function') {
+                onClosed()
+            }
+        }, 220)
+    }
 }
 
 function clearNotice() {
@@ -1128,6 +1141,65 @@ async function toggleMonitorActive(id) {
         renderMonitors(dashboardState.monitors)
     }
 }
+
+function initDialogs() {
+    document.querySelectorAll('dialog').forEach(dialog => {
+        // Fallback for light-dismiss (clicking the backdrop)
+        dialog.addEventListener('click', (event) => {
+            if (event.target !== dialog) return
+
+            const rect = dialog.getBoundingClientRect()
+            const isDialogContent = (
+                rect.top <= event.clientY &&
+                event.clientY <= rect.top + rect.height &&
+                rect.left <= event.clientX &&
+                event.clientX <= rect.left + rect.width
+            )
+
+            if (isDialogContent) return
+
+            if (dialog.id === 'modal') {
+                closeModal()
+            } else if (dialog.id === 'detailsModal') {
+                closeDetailsModal()
+            } else if (dialog.id === 'deleteConfirmModal') {
+                closeDeleteConfirmModal()
+            } else {
+                dialog.close()
+            }
+        })
+        
+        // Listen to cancel event (pressing Esc) to trigger proper cleanup
+        dialog.addEventListener('cancel', (event) => {
+            event.preventDefault() // prevent default instant close to let transition play
+            if (dialog.id === 'modal') {
+                closeModal()
+            } else if (dialog.id === 'detailsModal') {
+                closeDetailsModal()
+            } else if (dialog.id === 'deleteConfirmModal') {
+                closeDeleteConfirmModal()
+            } else {
+                dialog.close()
+            }
+        })
+    })
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+    initDialogs()
+    
+    // Sync aria-invalid with the CSS :user-invalid state
+    const syncAria = (el) => {
+        if (!el || !el.matches) return
+        el.setAttribute('aria-invalid', el.matches(':user-invalid') ? 'true' : 'false')
+    }
+
+    // Update on blur (to show error) and input (to clear it)
+    document.body.addEventListener('blur', (e) => syncAria(e.target), true)
+    document.body.addEventListener('input', (e) => {
+        if (e.target.hasAttribute('aria-invalid')) syncAria(e.target)
+    })
+})
 
 window.logout = logout
 window.openModal = openModal

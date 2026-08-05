@@ -7,7 +7,7 @@
     <meta name="theme-color" content="#0f172a">
     <title>UptimeMonitor — Dashboard</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="styles.css?v=3">
+    <link rel="stylesheet" href="styles.css?v=8">
     <link rel="preconnect" href="https://cdn.tailwindcss.com">
     <script>
         if (!localStorage.getItem('uptime_jwt')) {
@@ -39,7 +39,7 @@
     <nav class="bg-surface/50 backdrop-blur-md border-b border-white/5 sticky top-0 z-50">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="flex items-center justify-between h-16">
-                <a href="index.html" class="flex items-center gap-3" aria-label="Home">
+                <a href="index.html" class="flex items-center gap-3 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 focus-visible:ring-offset-surface rounded-lg" aria-label="Home">
                     <div
                         class="w-8 h-8 rounded-lg bg-gradient-to-br from-brand to-emerald-400 flex items-center justify-center shadow-lg shadow-brand/20">
                         <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
@@ -51,7 +51,7 @@
                 </a>
                 <div>
                     <button onclick="logout()"
-                        class="text-sm font-medium text-slate-400 hover:text-white transition-colors">Sign Out</button>
+                        class="text-sm font-medium text-slate-400 hover:text-white transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 focus-visible:ring-offset-surface rounded-lg px-3 py-1.5">Sign Out</button>
                 </div>
             </div>
         </div>
@@ -67,7 +67,7 @@
                 <p class="text-slate-400 text-sm mt-1">Real-time status of your endpoints</p>
             </div>
             <button onclick="openModal()"
-                class="bg-brand hover:bg-emerald-500 text-white px-5 py-2.5 rounded-lg font-medium text-sm transition-all shadow-lg shadow-brand/20 flex items-center gap-2 hover:scale-[1.02]">
+                class="bg-brand hover:bg-emerald-500 text-white px-5 py-2.5 rounded-lg font-medium text-sm transition-all shadow-lg shadow-brand/20 flex items-center gap-2 hover:scale-[1.02] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 focus-visible:ring-offset-background">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
                 </svg>
@@ -79,7 +79,7 @@
         <div id="noticeBar" aria-live="polite"
             class="mb-6 hidden items-start justify-between gap-4 rounded-xl border px-4 py-3 text-sm transition-opacity duration-200">
             <p id="noticeText" class="font-medium"></p>
-            <button onclick="clearNotice()" class="text-slate-300 hover:text-white transition" aria-label="Dismiss notice">
+            <button onclick="clearNotice()" class="text-slate-300 hover:text-white transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 focus-visible:ring-offset-background rounded-lg p-1" aria-label="Dismiss notice">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
                 </svg>
@@ -160,15 +160,14 @@
     </main>
 
     <!-- Add/Edit Monitor Modal -->
-    <div id="modal"
-        class="fixed inset-0 bg-background/80 backdrop-blur-sm z-[100] hidden items-center justify-center opacity-0 transition-opacity duration-300"
-        style="overscroll-behavior: contain;">
-        <div class="bg-surface rounded-2xl w-full max-w-lg mx-4 border border-white/10 shadow-2xl transform scale-95 transition-transform duration-300"
+    <!-- Add/Edit Monitor Modal -->
+    <dialog id="modal" class="outline-none" style="overscroll-behavior: contain;" aria-labelledby="monitorModalTitle">
+        <div class="bg-surface rounded-2xl w-full max-w-lg mx-4 border border-white/10 shadow-2xl"
             id="modalContent">
 
             <div class="px-6 py-4 border-b border-white/10 flex justify-between items-center">
                 <h3 id="monitorModalTitle" class="text-lg font-semibold text-white">Add Monitor</h3>
-                <button onclick="closeModal()" class="text-slate-400 hover:text-white transition" aria-label="Close dialog">
+                <button onclick="closeModal()" class="text-slate-400 hover:text-white transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 focus-visible:ring-offset-surface rounded-lg p-1" aria-label="Close dialog">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
                     </svg>
@@ -226,21 +225,21 @@
 
                 <div class="pt-4 flex justify-end gap-3">
                     <button type="button" onclick="closeModal()"
-                        class="px-5 py-2.5 rounded-lg font-medium text-slate-300 hover:bg-white/5 transition">Cancel</button>
+                        class="px-5 py-2.5 rounded-lg font-medium text-slate-300 hover:bg-white/5 transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 focus-visible:ring-offset-background">Cancel</button>
                     <button id="monitorSubmitButton" type="submit"
-                        class="bg-brand hover:bg-emerald-500 text-white px-5 py-2.5 rounded-lg font-medium transition shadow-lg shadow-brand/20">Save
+                        class="bg-brand hover:bg-emerald-500 text-white px-5 py-2.5 rounded-lg font-medium transition shadow-lg shadow-brand/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 focus-visible:ring-offset-background">Save
                         Monitor</button>
                 </div>
             </form>
         </div>
-    </div>
+    </dialog>
 
     <!-- Monitor Details Modal -->
-    <div id="detailsModal"
-        class="fixed inset-0 bg-background/80 backdrop-blur-sm z-[110] hidden items-center justify-center opacity-0 transition-opacity duration-200 px-4 py-6"
-        style="overscroll-behavior: contain;">
+    <dialog id="detailsModal"
+        class="outline-none max-w-6xl w-full"
+        style="overscroll-behavior: contain;" aria-labelledby="detailsTitle">
         <div id="detailsModalContent"
-            class="w-full max-w-6xl max-h-full overflow-hidden rounded-3xl border border-white/10 bg-surface shadow-2xl transform scale-95 transition-transform duration-200 flex flex-col">
+            class="w-full max-h-full overflow-hidden rounded-3xl border border-white/10 bg-surface shadow-2xl flex flex-col">
             <div class="flex items-start justify-between gap-4 border-b border-white/10 px-6 py-5">
                 <div class="min-w-0">
                     <p class="text-[10px] font-semibold uppercase tracking-[0.26em] text-slate-500">Monitor Insights</p>
@@ -250,9 +249,9 @@
                 </div>
                 <div class="flex items-center gap-3">
                     <button onclick="refreshSelectedMonitorDetails()"
-                        class="rounded-lg border border-white/10 bg-white/5 px-4 py-2 text-sm font-medium text-slate-200 transition hover:border-brand/40 hover:bg-brand/10">Refresh
+                        class="rounded-lg border border-white/10 bg-white/5 px-4 py-2 text-sm font-medium text-slate-200 transition hover:border-brand/40 hover:bg-brand/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 focus-visible:ring-offset-surface">Refresh
                         Data</button>
-                    <button onclick="closeDetailsModal()" class="text-slate-400 hover:text-white transition" aria-label="Close details">
+                    <button onclick="closeDetailsModal()" class="text-slate-400 hover:text-white transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 focus-visible:ring-offset-surface rounded-lg p-1" aria-label="Close details">
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                 d="M6 18L18 6M6 6l12 12"></path>
@@ -291,14 +290,14 @@
                 </section>
             </div>
         </div>
-    </div>
+    </dialog>
 
     <!-- Delete Confirm Modal -->
-    <div id="deleteConfirmModal"
-        class="fixed inset-0 bg-background/80 backdrop-blur-sm z-[120] hidden items-center justify-center opacity-0 transition-opacity duration-200 px-4"
-        style="overscroll-behavior: contain;">
+    <dialog id="deleteConfirmModal"
+        class="outline-none"
+        style="overscroll-behavior: contain;" aria-labelledby="deleteConfirmTitle">
         <div id="deleteConfirmContent"
-            class="w-full max-w-md rounded-2xl border border-white/10 bg-surface p-6 shadow-2xl transform scale-95 transition-transform duration-200">
+            class="w-full max-w-md rounded-2xl border border-white/10 bg-surface p-6 shadow-2xl">
             <div class="flex items-start gap-3">
                 <div class="mt-0.5 rounded-lg bg-red-500/10 p-2 text-red-400">
                     <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
@@ -308,7 +307,7 @@
                     </svg>
                 </div>
                 <div>
-                    <h3 class="text-lg font-semibold text-white">Delete Monitor</h3>
+                    <h3 id="deleteConfirmTitle" class="text-lg font-semibold text-white">Delete Monitor</h3>
                     <p class="mt-1 text-sm text-slate-300">This action cannot be undone.</p>
                 </div>
             </div>
@@ -318,12 +317,12 @@
 
             <div class="mt-6 flex justify-end gap-3">
                 <button type="button" onclick="closeDeleteConfirmModal()"
-                    class="rounded-lg px-4 py-2 text-sm font-medium text-slate-300 transition hover:bg-white/5">Cancel</button>
+                    class="rounded-lg px-4 py-2 text-sm font-medium text-slate-300 transition hover:bg-white/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 focus-visible:ring-offset-surface">Cancel</button>
                 <button type="button" onclick="confirmDeleteMonitor()"
-                    class="rounded-lg bg-red-500 px-4 py-2 text-sm font-medium text-white transition hover:bg-red-400">Delete</button>
+                    class="rounded-lg bg-red-500 px-4 py-2 text-sm font-medium text-white transition hover:bg-red-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500 focus-visible:ring-offset-2 focus-visible:ring-offset-surface">Delete</button>
             </div>
         </div>
-    </div>
+    </dialog>
 
     <script src="app.js?v=3"></script>
     <script>

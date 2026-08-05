@@ -8,7 +8,7 @@
     <title>UptimeMonitor — Create Account</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="preconnect" href="https://cdn.tailwindcss.com">
-    <link rel="stylesheet" href="styles.css?v=3">
+    <link rel="stylesheet" href="styles.css?v=8">
     <script>
         tailwind.config = {
             darkMode: 'class',
@@ -25,7 +25,7 @@
 
 <body
     class="bg-slate-900 text-slate-100 min-h-screen flex items-center justify-center font-sans antialiased overflow-hidden relative"
-    style="touch-action: manipulation;">
+    style="touch-action: manipulation; overscroll-behavior: contain;">
 
     <!-- Decorative background blobs -->
     <div class="absolute top-[-10%] left-[-10%] w-96 h-96 bg-brand opacity-20 rounded-full blur-3xl animate-pulse" aria-hidden="true"></div>
@@ -62,14 +62,14 @@
             </div>
 
             <button type="submit"
-                class="w-full bg-gradient-to-r from-brand to-emerald-600 hover:from-emerald-500 hover:to-emerald-400 text-white font-semibold py-3 px-4 rounded-lg transform transition-all duration-200 hover:scale-[1.02] shadow-lg shadow-brand/25 flex justify-center items-center">
+                class="w-full bg-gradient-to-r from-brand to-emerald-600 hover:from-emerald-500 hover:to-emerald-400 text-white font-semibold py-3 px-4 rounded-lg transform transition-all duration-200 hover:scale-[1.02] shadow-lg shadow-brand/25 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 focus-visible:ring-offset-slate-800 flex justify-center items-center">
                 <span id="regBtnText">Register</span>
                 <span id="regLoader"
                     class="hidden w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" aria-hidden="true"></span>
             </button>
 
             <p class="text-center text-xs text-slate-500">Already have an account? <a href="login.html"
-                    class="text-brand hover:underline font-medium">Sign in</a></p>
+                    class="text-brand hover:underline font-medium focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 focus-visible:ring-offset-slate-800 rounded">Sign in</a></p>
         </form>
     </div>
 
