@@ -15,12 +15,12 @@ public class KeepAlivePing {
     private final String externalUrl;
 
     public KeepAlivePing(WebClient webClient,
-                         @Value("${uptime.keepalive.external-url:}") String externalUrl) {
+                         @Value("${uptime.keepalive.external-url:${RENDER_EXTERNAL_URL:${uptime.app.base-url:}}}") String externalUrl) {
         this.externalUrl = externalUrl;
         this.webClient = webClient;
     }
 
-    @Scheduled(fixedDelayString = "${uptime.keepalive.interval-ms:600000}")
+    @Scheduled(fixedDelayString = "${uptime.keepalive.interval-ms:840000}")
     public void ping() {
         if (externalUrl == null || externalUrl.isBlank()) {
             return;

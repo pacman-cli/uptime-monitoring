@@ -55,8 +55,14 @@ uptime:
   outbox:
     poll-interval-ms: 10000
   app:
-    base-url: http://localhost:8080
+    base-url: ${APP_BASE_URL:http://localhost:8080}
   alert:
     email:
       enabled: true
       from: ${SMTP_USERNAME}
+  keepalive:
+    external-url: ${RENDER_EXTERNAL_URL:${uptime.app.base-url:}}
+    interval-ms: ${KEEPALIVE_INTERVAL_MS:840000}
+  render:
+    deploy-hook: ${RENDER_DEPLOY_HOOK:}
+    deploy-interval-ms: ${RENDER_DEPLOY_INTERVAL_MS:86400000}
